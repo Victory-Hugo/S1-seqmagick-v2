@@ -5,67 +5,82 @@ seqmagick2
 .. image:: https://travis-ci.org/fhcrc/seqmagick2.svg?branch=master
     :target: https://travis-ci.org/fhcrc/seqmagick2
 
-We often have to convert sequence files between formats and do little
-manipulations on them, and it's not worth writing scripts for that.
-``seqmagick2`` is a kickass little utility to expose the file format conversion
-in BioPython in a convenient way.  Instead of having a big mess of scripts,
-there is one that takes arguments::
+我们经常需要在不同格式之间转换序列文件并对其进行一些处理，
+但为此编写脚本往往不值得。``seqmagick2`` 是一个强大的小工具，
+可以以便捷的方式调用 BioPython 中的文件格式转换功能。
+无需编写一堆脚本，只需一个接收参数的工具::
 
-    seqmagick2 convert a.fasta b.phy    # convert from fasta to phylip
-    seqmagick2 mogrify --ungap a.fasta  # remove all gaps from a.fasta, in place
-    seqmagick2 info *.{fasta,sto}       # describe all FASTA and Stockholm
-                                       # files in the current directory
+    seqmagick2 convert a.fasta b.phy    # 将 fasta 格式转换为 phylip 格式
+    seqmagick2 mogrify --ungap a.fasta  # 从 a.fasta 中删除所有间隙，原地修改
+    seqmagick2 info *.{fasta,sto}       # 描述当前目录中所有 FASTA 和 Stockholm
+                                       # 文件的信息
 
-Requirements
-============
+需求
+========
 
 * Python >= 3.5
 * biopython >= 1.78
 
-Installation
-============
+快速安装
+========
 
-Use pip::
+**推荐方式**：在 conda 环境中安装（避免污染系统 Python）::
+
+   # 1. 创建 conda 环境（可选，推荐）
+   conda create -n seqmagick python=3.9
+   conda activate seqmagick
+
+   # 2. 从 GitHub 直接安装
+   pip install git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git
+
+如果上述命令无法工作，您可以手动克隆后安装::
+
+   git clone https://github.com/Victory-Hugo/S1-seqmagick-v2.git
+   cd S1-seqmagick-v2
+   pip install -e .
+
+**注意**：请确保在目标 Python 环境中运行 pip 命令。如果使用 conda，先激活环境再安装。
+
+安装
+========
+
+使用 pip::
 
    pip install seqmagick2
 
-Note that as of version 0.8.0, this package requires Python 3.5+. If
-you want to use the most recent version compatible with Python 2.7::
+注意：从版本 0.8.0 开始，该软件包需要 Python 3.5+。
+如果您想使用与 Python 2.7 兼容的最新版本::
 
   pip install seqmagick2==0.6.2
 
-Features
+功能特性
 ========
 
-* Modifying sequences: Remove gaps, reverse complement, reverse, change case,
+* 修改序列：删除间隙、反向互补、反向、改变大小写、
 
-  - Remove gaps
-  - Reverse & reverse complement
-  - Trim to a range of residues
-  - Change case
-  - Sort by length or ID
-  - `more`_
+  - 删除间隙
+  - 反向和反向互补
+  - 修剪到指定的残基范围
+  - 改变大小写
+  - 按长度或 ID 排序
+  - `更多`_
 
-* Displaying `information <http://seqmagick2.readthedocs.org/en/latest/info.html>`_ about
-  sequence files
-* Subsetting sequence files by:
+* 显示序列文件的 `信息 <http://seqmagick2.readthedocs.org/en/latest/info.html>`_
+* 通过以下方式对序列文件进行子集化：
 
-  - Position
+  - 位置
   - ID
-  - Deduplication
-  - `more`_
+  - 去重复
+  - `更多`_
 
-* Filtering sequences by `quality score
-  <http://seqmagick2.readthedocs.org/en/latest/quality_filter.html>`_
-* Trimming alignments to a `region of interest
-  <http://seqmagick2.readthedocs.org/en/latest/primer_trim.html>`_ defined by the
-  forward and reverse primers
+* 通过 `质量分数 <http://seqmagick2.readthedocs.org/en/latest/quality_filter.html>`_ 过滤序列
+* 将比对序列修剪到由正向和反向引物定义的 `感兴趣区域 <http://seqmagick2.readthedocs.org/en/latest/primer_trim.html>`_
 
-Want to learn more? Head to the `Documentation`_.
+想了解更多？前往 `文档`_。
 
-``seqmagick2`` is free software under the GPL v3.
+``seqmagick2`` 是 GPL v3 下的自由软件。
 
 
-.. _`Documentation`: http://seqmagick2.readthedocs.org/en/latest/
+.. _`文档`: http://seqmagick2.readthedocs.org/en/latest/
 
-.. _`more`: http://seqmagick2.readthedocs.org/en/latest/convert_mogrify.html
+.. _`更多`: http://seqmagick2.readthedocs.org/en/latest/convert_mogrify.html

@@ -3,6 +3,7 @@ Functions to transform / filter sequences
 """
 import collections
 import contextlib
+import csv
 import os
 import pickle as pickle
 import gzip
@@ -208,6 +209,64 @@ def exclude_from_file(records, handle):
     for record in records:
         if record.id.strip() not in ids:
             yield record
+
+
+def _is_rename_header(row):
+    if len(row) < 2:
+        return False
+    first = row[0].strip().lstrip('\ufeff').lstrip('#').lower()
+    second = row[1].strip().lower()
+    header_tokens = {
+        'id', 'seqid', 'seq_id', 'name',
+        'old', 'old_id', 'original', 'original_id', 'from', 'source',
+        'new', 'new_id', 'rename', 'to', 'target',
+    }
+    return (first in header_tokens or 'id' in first) and (
+        second in header_tokens or 'id' in second
+    )
+
+
+def _load_rename_map(handle, delimiter):
+    reader = csv.reader(handle, delimiter=delimiter)
+    mapping = {}
+    first_row = True
+    for row in reader:
+        if not row or all(not cell.strip() for cell in row):
+            continue
+        if row[0].lstrip().startswith('#'):
+            continue
+        if len(row) < 2:
+            raise ValueError("Rename map row must have at least 2 columns")
+        if first_row and _is_rename_header(row):
+            first_row = False
+            continue
+        first_row = False
+        old_id = row[0].strip().lstrip('\ufeff')
+        new_id = row[1].strip()
+        if not old_id:
+            raise ValueError("Rename map row missing original ID")
+        mapping[old_id] = new_id
+    return mapping
+
+
+def rename_sequences(records, mapping_handle, delimiter='\t'):
+    """
+    Rename sequence IDs based on a two-column mapping file.
+    """
+    mapping = _load_rename_map(mapping_handle, delimiter)
+    for record in records:
+        old_id = record.id
+        new_id = mapping.get(old_id)
+        if new_id is None:
+            yield record
+            continue
+        record.id = new_id
+        record.name = new_id
+        if record.description == old_id:
+            record.description = new_id
+        elif record.description.startswith(old_id + " "):
+            record.description = new_id + record.description[len(old_id):]
+        yield record
 
 
 def isolate_region(sequences, start, end, gap_char='-'):

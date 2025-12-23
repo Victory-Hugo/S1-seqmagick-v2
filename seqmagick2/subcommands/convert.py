@@ -2,6 +2,7 @@
 Convert between sequence formats
 """
 import argparse
+import copy
 import functools
 import logging
 import random
@@ -20,6 +21,46 @@ ALPHABETS = {
     "rna-ambiguous": "RNA",
     "protein": "protein",
 }
+
+def _parse_rename_delimiter(value):
+    if value in ('\\t', 'tab'):
+        return '\t'
+    if value == '\t':
+        return '\t'
+    if value == ',':
+        return ','
+    raise argparse.ArgumentTypeError("Delimiter must be ',' or '\\\\t'.")
+
+
+class RenameDelimiterAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        delimiter = _parse_rename_delimiter(values)
+        state = getattr(namespace, 'rename_state', None)
+        if state is None:
+            state = {'delimiter': delimiter}
+            setattr(namespace, 'rename_state', state)
+        else:
+            state['delimiter'] = delimiter
+        setattr(namespace, self.dest, values)
+
+
+class RenameAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        handle = values
+        state = getattr(namespace, 'rename_state', None)
+        if state is None:
+            state = {'delimiter': _parse_rename_delimiter(
+                getattr(namespace, 'rename_delimiter', '\\t'))}
+            setattr(namespace, 'rename_state', state)
+
+        def rename_transform(records, mapping_handle=handle, state=state):
+            return transform.rename_sequences(
+                records, mapping_handle, state['delimiter'])
+
+        items = copy.copy(getattr(namespace, 'transforms', None)) or []
+        items.append(rename_transform)
+        setattr(namespace, 'transforms', items)
+        setattr(namespace, self.dest, handle)
 
 def add_options(parser):
     """
@@ -205,6 +246,12 @@ def add_options(parser):
     id_mods.add_argument('--strip-range', dest='transforms',
             action=partial_action(transform.strip_range), help="""Strip ranges
             from sequences IDs, matching </x-y>""")
+    id_mods.add_argument('--rename', metavar='MAP',
+            action=RenameAction, help="""Rename sequence IDs based on a
+            two-column map file (old ID, new ID).""")
+    id_mods.add_argument('--rename-delimiter', dest='rename_delimiter',
+            default='\\t', action=RenameDelimiterAction,
+            help="Delimiter for --rename map file: ',' or '\\t' (default: \\t).")
 
     format_group = parser.add_argument_group('Format Options')
     format_group.add_argument('--input-format', metavar='FORMAT',

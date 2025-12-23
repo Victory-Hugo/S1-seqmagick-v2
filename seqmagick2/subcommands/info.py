@@ -31,6 +31,8 @@ def build_parser(parser):
     parser.add_argument('--threads', default=1,
             type=int,
             help="""Number of threads (CPUs). [%(default)s] """)
+    parser.add_argument('-more', '--more', dest='more', action='store_true',
+            help="Output per-sequence details (length, GC%%, N count, gaps).")
 
 class SeqInfoWriter(object):
     """
@@ -95,6 +97,58 @@ _HEADERS = ('name', 'alignment', 'min_len', 'max_len', 'avg_len',
               'num_seqs')
 _SeqFileInfo = collections.namedtuple('SeqFileInfo', _HEADERS)
 
+_DETAIL_HEADERS = ('file', 'id', 'length', 'gc_pct', 'n_count', 'gap_count')
+_SeqRecordInfo = collections.namedtuple('SeqRecordInfo', _DETAIL_HEADERS)
+
+
+class DetailSeqInfoWriter(SeqInfoWriter):
+    def write(self):
+        self.write_header(_DETAIL_HEADERS)
+        for row in self.rows:
+            self.write_row(_SeqRecordInfo(*row))
+
+
+class CsvDetailSeqInfoWriter(DetailSeqInfoWriter):
+    delimiter = ','
+    def __init__(self, sequence_files, rows, output):
+        super(CsvDetailSeqInfoWriter, self).__init__(
+            sequence_files, rows, output)
+        self.writer = csv.writer(self.output, delimiter=self.delimiter,
+                lineterminator='\n')
+
+    def write_row(self, row):
+        if hasattr(row, '_replace'):
+            row = row._replace(gc_pct='{0:.2f}'.format(row.gc_pct))
+        self.writer.writerow(row)
+
+
+class TsvDetailSeqInfoWriter(CsvDetailSeqInfoWriter):
+    delimiter = '\t'
+
+
+class AlignedDetailSeqInfoWriter(DetailSeqInfoWriter):
+    def __init__(self, sequence_files, rows, output):
+        super(AlignedDetailSeqInfoWriter, self).__init__(
+            sequence_files, rows, output)
+        self.file_width = max(len('file'), max(len(f) for f in sequence_files))
+        self.id_width = max(len('id'), 20)
+
+    def write_header(self, header):
+        fmt = ('{0:' + str(self.file_width) + 's} '
+               '{1:' + str(self.id_width) + 's} '
+               '{2:>10s}{3:>10s}{4:>10s}{5:>10s}')
+        print(fmt.format(*header), file=self.output)
+
+    def write_row(self, row):
+        fmt = ('{file:' + str(self.file_width) + 's} '
+               '{id:' + str(self.id_width) + 's} '
+               '{length:10d}{gc_pct:10.2f}{n_count:10d}{gap_count:10d}')
+        print(fmt.format(**row._asdict()), file=self.output)
+
+
+_DETAIL_WRITERS = {'csv': CsvDetailSeqInfoWriter, 'tab': TsvDetailSeqInfoWriter,
+        'align': AlignedDetailSeqInfoWriter}
+
 def summarize_sequence_file(source_file, file_type=None):
     """
     Summarizes a sequence file, returning a tuple containing the name,
@@ -142,6 +196,23 @@ def summarize_sequence_file(source_file, file_type=None):
     return (source_file, str(is_alignment).upper(), min_length,
             max_length, avg_length, sequence_count)
 
+
+def iter_sequence_details(source_file, file_type=None):
+    with common.FileType('rt')(source_file) as fp:
+        if not file_type:
+            file_type = fileformat.from_handle(fp)
+        for record in SeqIO.parse(fp, file_type):
+            seq = str(record.seq).upper()
+            length = len(record)
+            gap_count = seq.count('-') + seq.count('.')
+            n_count = seq.count('N')
+            non_gap = length - gap_count
+            if non_gap:
+                gc_pct = ((seq.count('G') + seq.count('C')) / float(non_gap)) * 100.0
+            else:
+                gc_pct = 0.0
+            yield (source_file, record.id, length, gc_pct, n_count, gap_count)
+
 def action(arguments):
     """
     Given one more more sequence files, determine if the file is an alignment,
@@ -161,19 +232,23 @@ def action(arguments):
         except AttributeError:
             output_format = 'tab'
 
-    writer_cls = _WRITERS[output_format]
-
-    ssf = partial(summarize_sequence_file, file_type = arguments.input_format)
-
-    # if only one thread, do not use the multithreading so parent process
-    # can be terminated using ctrl+c
-    if arguments.threads > 1:
-        pool = multiprocessing.Pool(processes=arguments.threads)
-        summary = pool.imap(ssf, arguments.source_files)
+    if arguments.more:
+        writer_cls = _DETAIL_WRITERS[output_format]
+        rows = (row for f in arguments.source_files
+                for row in iter_sequence_details(
+                    f, file_type=arguments.input_format))
     else:
-        summary = (ssf(f) for f in arguments.source_files)
+        writer_cls = _WRITERS[output_format]
+        ssf = partial(summarize_sequence_file, file_type=arguments.input_format)
+
+        # if only one thread, do not use the multithreading so parent process
+        # can be terminated using ctrl+c
+        if arguments.threads > 1:
+            pool = multiprocessing.Pool(processes=arguments.threads)
+            rows = pool.imap(ssf, arguments.source_files)
+        else:
+            rows = (ssf(f) for f in arguments.source_files)
 
     with handle:
-        writer = writer_cls(arguments.source_files, summary, handle)
+        writer = writer_cls(arguments.source_files, rows, handle)
         writer.write()
-
