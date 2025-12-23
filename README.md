@@ -26,18 +26,18 @@ seqmagick2 info *.{fasta,sto}       # 描述当前目录中所有 FASTA 和 Stoc
 conda create -n seqmagick python=3.9
 conda activate seqmagick
 
-# 2. 从 GitHub 直接安装
-pip install git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git@v1.0.0
+# 2. 从 GitHub 直接安装（默认最新版本）
+pip install git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git
 
 # 3. 如果你已经安装过旧版本，建议先卸载再重新安装
 pip uninstall -y seqmagick2
-pip install --no-cache-dir git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git@v1.0.0
+pip install --no-cache-dir git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git
 ```
 
 如果上述命令无法工作，可以手动克隆后安装：
 
 ``` bash
-git clone https://github.com/Victory-Hugo/S1-seqmagick-v2.git@v1.0.0
+git clone https://github.com/Victory-Hugo/S1-seqmagick-v2.git
 cd S1-seqmagick-v2
 pip install -e .
 ```
