@@ -1,5 +1,7 @@
 =========
 seqmagick2
+==========
+Version: 1.0.0
 =========
 
 .. image:: https://travis-ci.org/fhcrc/seqmagick2.svg?branch=master
