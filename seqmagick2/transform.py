@@ -3,6 +3,7 @@ Functions to transform / filter sequences
 """
 import collections
 import contextlib
+import os
 import pickle as pickle
 import gzip
 import itertools
@@ -25,6 +26,61 @@ GAP_TABLE = {ord(c): None for c in GAP_CHARS}
 
 # Size of temporary file buffer: default to 256MB
 DEFAULT_BUFFER_SIZE = 268435456  # 256 * 2**20
+
+
+def _stream_copy(source, destination, chunk_size=1024 * 1024):
+    """
+    Copy a text stream in chunks to avoid loading the entire file into memory.
+    """
+    while True:
+        chunk = source.read(chunk_size)
+        if not chunk:
+            break
+        destination.write(chunk)
+
+
+@contextlib.contextmanager
+def _materialize_source_path(source_file):
+    """
+    Provide a real file path suitable for SeqIO.index.
+
+    If the source is gzip or lacks a stable on-disk path (e.g. stdin), stream
+    contents to a temporary file to avoid a full in-memory read.
+    """
+    source_name = getattr(source_file, "name", None)
+    is_gzip = False
+    if isinstance(source_file, gzip.GzipFile):
+        is_gzip = True
+    elif source_name and source_name.lower().endswith('.gz'):
+        is_gzip = True
+    elif hasattr(source_file, "buffer") and isinstance(source_file.buffer, gzip.GzipFile):
+        is_gzip = True
+
+    needs_materialize = (
+        is_gzip or
+        not source_name or
+        source_name in ("<stdin>", "<fdopen>")
+    )
+
+    if not needs_materialize:
+        yield source_name
+        return
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, mode='w+t')
+    try:
+        try:
+            source_file.seek(0)
+        except Exception:
+            pass
+        _stream_copy(source_file, tmp)
+        tmp.flush()
+        tmp.close()
+        yield tmp.name
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except OSError:
+            pass
 
 
 @contextlib.contextmanager
@@ -629,11 +685,11 @@ def transcribe(records, transcribe):
         description = record.description
         name = record.id
         if transcribe == 'dna2rna':
-            dna = Seq(sequence, IUPAC.ambiguous_dna)
+            dna = Seq(sequence)
             rna = dna.transcribe()
             yield SeqRecord(rna, id=name, description=description)
         elif transcribe == 'rna2dna':
-            rna = Seq(sequence, IUPAC.ambiguous_rna)
+            rna = Seq(sequence)
             dna = rna.back_transcribe()
             yield SeqRecord(dna, id=name, description=description)
 
@@ -754,28 +810,28 @@ def sort_length(source_file, source_file_type, direction=1):
 
     # Adapted from the Biopython tutorial example.
 
-    # Get the lengths and ids, and sort on length
-    len_and_ids = sorted((len(rec), rec.id)
-                         for rec in SeqIO.parse(source_file, source_file_type))
+    with _materialize_source_path(source_file) as source_path:
+        with open(source_path, 'rt') as handle:
+            len_and_ids = sorted(
+                (len(rec), rec.id)
+                for rec in SeqIO.parse(handle, source_file_type)
+            )
 
-    if direction == 0:
-        ids = reversed([seq_id for (length, seq_id) in len_and_ids])
-    else:
-        ids = [seq_id for (length, seq_id) in len_and_ids]
-    del len_and_ids  # free this memory
+        if direction == 0:
+            ids = reversed([seq_id for (length, seq_id) in len_and_ids])
+        else:
+            ids = [seq_id for (length, seq_id) in len_and_ids]
+        del len_and_ids  # free this memory
 
-    # SeqIO.index does not handle gzip instances
-    if isinstance(source_file, gzip.GzipFile):
-        tmpfile = tempfile.NamedTemporaryFile()
-        source_file.seek(0)
-        tmpfile.write(source_file.read())
-        tmpfile.seek(0)
-        source_file = tmpfile
-
-    record_index = SeqIO.index(source_file.name, source_file_type)
-
-    for seq_id in ids:
-        yield record_index[seq_id]
+        record_index = SeqIO.index(source_path, source_file_type)
+        try:
+            for seq_id in ids:
+                yield record_index[seq_id]
+        finally:
+            try:
+                record_index.close()
+            except Exception:
+                pass
 
 
 def sort_name(source_file, source_file_type, direction=1):
@@ -789,22 +845,21 @@ def sort_name(source_file, source_file_type, direction=1):
 
     # Adapted from the Biopython tutorial example.
 
-    # Sort on id
-    ids = sorted((rec.id) for rec in SeqIO.parse(source_file,
-                                                 source_file_type))
+    with _materialize_source_path(source_file) as source_path:
+        with open(source_path, 'rt') as handle:
+            ids = sorted(
+                rec.id for rec in SeqIO.parse(handle, source_file_type)
+            )
 
-    if direction == 0:
-        ids = reversed(ids)
+        if direction == 0:
+            ids = reversed(ids)
 
-    # SeqIO.index does not handle gzip instances
-    if isinstance(source_file, gzip.GzipFile):
-        tmpfile = tempfile.NamedTemporaryFile()
-        source_file.seek(0)
-        tmpfile.write(source_file.read())
-        tmpfile.seek(0)
-        source_file = tmpfile
-
-    record_index = SeqIO.index(source_file.name, source_file_type)
-
-    for id in ids:
-        yield record_index[id]
+        record_index = SeqIO.index(source_path, source_file_type)
+        try:
+            for seq_id in ids:
+                yield record_index[seq_id]
+        finally:
+            try:
+                record_index.close()
+            except Exception:
+                pass

@@ -301,6 +301,9 @@ def transform_file(source_file, destination_file, arguments):
         for apply_function in arguments.apply_function:
             records = apply_function(records)
 
+    # Optional profiling for large streams.
+    records = common.maybe_profile_iterable('convert.write', records)
+
     # Only the fasta format is supported, as SeqIO.write does not have a 'wrap'
     # parameter.
     if (arguments.line_wrap is not None and destination_file_type == 'fasta'):

@@ -15,7 +15,7 @@ import pygtrie as trie
 from Bio.SeqIO import QualityIO
 
 from seqmagick2 import fileformat, __version__
-from .common import typed_range, FileType
+from .common import typed_range, FileType, maybe_profile_iterable
 
 
 def trie_match(string, trie):
@@ -711,6 +711,7 @@ def action(arguments):
 
         # Track read sequences
         sequences = listener.iterable_hook('read', sequences)
+        sequences = maybe_profile_iterable('quality_filter.read', sequences)
 
         # Add filters
         if arguments.min_mean_quality and input_type == 'fastq':
@@ -762,6 +763,7 @@ def action(arguments):
 
         # Track sequences which passed all filters
         sequences = listener.iterable_hook('write', sequences)
+        sequences = maybe_profile_iterable('quality_filter.write', sequences)
 
         with arguments.output_file:
             SeqIO.write(sequences, arguments.output_file, output_type)

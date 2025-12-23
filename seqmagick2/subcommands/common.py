@@ -5,11 +5,13 @@ import argparse
 import contextlib
 import copy
 import functools
+import logging
 import os
 import os.path
 import signal
 import sys
 import tempfile
+import time
 
 from seqmagick2 import fileformat
 
@@ -236,3 +238,34 @@ class FileType(object):
                 raise ValueError("Invalid mode: {0}".format(string))
         else:
             return self._get_handle(string)
+
+
+def maybe_profile_iterable(name, iterable, log_every=100000):
+    """
+    Optionally profile iterable throughput when SEQMAGICK2_PROFILE is set.
+    """
+    if not os.environ.get('SEQMAGICK2_PROFILE'):
+        return iterable
+
+    def generator():
+        start = time.time()
+        count = 0
+        for item in iterable:
+            count += 1
+            if log_every and count % log_every == 0:
+                elapsed = time.time() - start
+                rate = count / elapsed if elapsed else 0.0
+                logging.info(
+                    "[profile] %s: %d records in %.1fs (%.1f rec/s)",
+                    name, count, elapsed, rate
+                )
+            yield item
+
+        elapsed = time.time() - start
+        rate = count / elapsed if elapsed else 0.0
+        logging.info(
+            "[profile] %s: %d records in %.1fs (%.1f rec/s)",
+            name, count, elapsed, rate
+        )
+
+    return generator()
