@@ -4,7 +4,7 @@
 
 Version: 1.0.0
 
-我们经常需要在不同格式之间转换序列文件并对其进行一些处理，但为此编写脚本往往不值得。`seqmagick2` 是一个强大的小工具，可以以便捷的方式调用 BioPython 中的文件格式转换功能。无需编写一堆脚本，只需一个接收参数的工具。点击这里查看[贡献者](https://github.com/fhcrc/seqmagick2/graphs/contributors)
+我们经常需要在不同格式之间转换序列文件并对其进行一些处理，但为此编写脚本往往不值得。`seqmagick2` 是一个强大的小工具，可以以便捷的方式调用 BioPython 中的文件格式转换功能。无需编写一堆脚本，只需一个接收参数的工具。点击这里查看[贡献者](https://github.com/fhcrc/seqmagick/graphs/contributors)
 
 ``` bash
 seqmagick2 convert a.fasta b.phy    # 将 fasta 格式转换为 phylip 格式
@@ -43,6 +43,30 @@ pip install -e .
 ```
 
 **注意**：请确保在目标 Python 环境中运行 pip 命令。如果使用 conda，先激活环境再安装。
+
+## 常见安装问题
+
+1) `InvalidVersion: 'v1.0.2-2-ged72414'`
+
+这是旧版本的版本号格式不符合 PEP 440 导致的。请更新到最新代码后重试：
+
+``` bash
+pip install --no-cache-dir git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git
+```
+
+如仍报错，尝试升级构建工具：
+
+``` bash
+pip install -U pip setuptools wheel
+```
+
+2) 安装后找不到 `seqmagick2` 命令
+
+请确认你运行 pip 的 Python 与当前终端一致，或直接用模块方式运行：
+
+``` bash
+python -m seqmagick2 --help
+```
 
 ## 功能特性
 
