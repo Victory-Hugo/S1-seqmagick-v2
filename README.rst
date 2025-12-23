@@ -33,11 +33,16 @@ Version: 1.0.0
    conda activate seqmagick
 
    # 2. 从 GitHub 直接安装
-   pip install git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git
+   pip install git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git@v1.0.0
+
+   # 3. 如果你已经安装过旧版本，建议先卸载再重新安装
+   pip uninstall -y seqmagick2 
+   pip install --no-cache-dir git+https://github.com/Victory-Hugo/S1-seqmagick-v2.git@v1.0.0
+
 
 如果上述命令无法工作，您可以手动克隆后安装::
 
-   git clone https://github.com/Victory-Hugo/S1-seqmagick-v2.git
+   git clone https://github.com/Victory-Hugo/S1-seqmagick-v2.git@v1.0.0
    cd S1-seqmagick-v2
    pip install -e .
 
