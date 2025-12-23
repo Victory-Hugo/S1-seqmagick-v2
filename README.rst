@@ -48,17 +48,6 @@ Version: 1.0.0
 
 **注意**：请确保在目标 Python 环境中运行 pip 命令。如果使用 conda，先激活环境再安装。
 
-安装
-========
-
-使用 pip::
-
-   pip install seqmagick2
-
-注意：从版本 0.8.0 开始，该软件包需要 Python 3.5+。
-如果您想使用与 Python 2.7 兼容的最新版本::
-
-  pip install seqmagick2==0.6.2
 
 功能特性
 ========
