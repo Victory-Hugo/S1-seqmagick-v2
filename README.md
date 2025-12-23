@@ -4,9 +4,6 @@ seqmagick2
 Version: 1.0.0
 =========
 
-.. image:: https://travis-ci.org/fhcrc/seqmagick2.svg?branch=master
-    :target: https://travis-ci.org/fhcrc/seqmagick2
-
 我们经常需要在不同格式之间转换序列文件并对其进行一些处理，
 但为此编写脚本往往不值得。``seqmagick2`` 是一个强大的小工具，
 可以以便捷的方式调用 BioPython 中的文件格式转换功能。
