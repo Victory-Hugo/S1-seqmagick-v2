@@ -1,5 +1,5 @@
 """
-Tests for seqmagick.transform
+Tests for seqmagick2.transform
 """
 
 from io import StringIO
@@ -11,7 +11,7 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 
-from seqmagick import transform
+from seqmagick2 import transform
 
 logging.basicConfig(level=logging.FATAL)
 

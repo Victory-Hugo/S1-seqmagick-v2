@@ -1,13 +1,13 @@
 ``info``
 ========
 
-``seqmagick info`` describes one or more sequence files
+``seqmagick2 info`` describes one or more sequence files
 
 Example
 *******
 ::
 
-    seqmagick info examples/*.fasta
+    seqmagick2 info examples/*.fasta
 
     name                      alignment  min_len  max_len  avg_len  num_seqs
     examples/aligned.fasta    TRUE       9797     9797     9797.00  15
@@ -17,7 +17,7 @@ Example
     examples/wrapped.fasta    FALSE      120      237      178.50   2
 
 Output can be in comma-separated, tab-separated, or aligned formats. See
-``seqmagick info -h`` for details.
+``seqmagick2 info -h`` for details.
 
 Usage:
 

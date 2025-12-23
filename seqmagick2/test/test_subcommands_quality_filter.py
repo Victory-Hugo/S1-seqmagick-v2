@@ -5,7 +5,7 @@ import unittest
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from seqmagick.subcommands import quality_filter
+from seqmagick2.subcommands import quality_filter
 
 IS_PYPY = hasattr(sys, 'pypy_version_info')
 

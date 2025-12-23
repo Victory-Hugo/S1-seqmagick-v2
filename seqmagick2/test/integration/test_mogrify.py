@@ -5,9 +5,9 @@ import shlex
 import shutil
 import tempfile
 
-from seqmagick.scripts import cli
-from seqmagick.subcommands.common import FileType
-from seqmagick.test.integration import data_path
+from seqmagick2.scripts import cli
+from seqmagick2.subcommands.common import FileType
+from seqmagick2.test.integration import data_path
 
 from . import test_convert
 

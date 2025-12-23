@@ -5,7 +5,7 @@ import sys
 import unittest
 import tempfile
 
-from seqmagick.subcommands import common
+from seqmagick2.subcommands import common
 
 d = os.path.dirname(__file__)
 data_dir = os.path.join(d, "integration", "data")

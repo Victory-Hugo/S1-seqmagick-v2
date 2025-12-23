@@ -2,11 +2,11 @@ The most convenient way to install is using pip (best to make sure you
 are using the most recent version of pip):
 
     pip install -U pip
-    pip install seqmagick
+    pip install seqmagick2
 
 If the above doesn't work or you want to install from a clone of the
 project: First, install BioPython (http://www.biopython.org). NumPy
-(which parts of BioPython depend on) is not required for seqmagick to
+(which parts of BioPython depend on) is not required for seqmagick2 to
 function but will most likely be installed as a dependency of
 BioPython. Once done, install system-wide with:
 

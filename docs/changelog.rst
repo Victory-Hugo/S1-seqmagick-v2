@@ -1,4 +1,4 @@
-Changes for seqmagick
+Changes for seqmagick2
 =====================
 
 0.8.0
@@ -6,7 +6,7 @@ Changes for seqmagick
 
 * Supports Python 3.5+
 * Drops support for Python 3.4
-* Fix issue: "seqmagick with no params gives KeyError:None" [GH-77]
+* Fix issue: "seqmagick2 with no params gives KeyError:None" [GH-77]
 * Fix for Biopython 1.71 dual coding support [GH-76]; also fixes issue: "Translation error with new BioPython" [GH-79]
 * Send logging to stderr, not stdout [GH-75]
 
@@ -48,30 +48,30 @@ Changes for seqmagick
 * Fix scoring for mixed-case sequences in ``primer-trim``.
 * Fix bug in ``primer-trim`` - failed when sequence had multiple 5' gaps compared to the primer.
 * Clarify documentation and fix bug in convert/mogrify ``--pattern-replace`` [GH-39]
-* Support for gzip files in ``seqmagick convert --sort``
+* Support for gzip files in ``seqmagick2 convert --sort``
 
 0.5.0
 -----
 
-* Change ``seqmagick extract-ids --source-format`` to ``--input-format`` to match
+* Change ``seqmagick2 extract-ids --source-format`` to ``--input-format`` to match
   other commands (GH-29)
 * Support gzip- and bzip2-compressed inputs and outputs for most commands (GH-30)
 * Change default input format for ``sff`` to ``sff-trim``, which respects the
   clipping locations embedded in each sequence record.
-* Add ``--details-out`` option to ``seqmagick quality-filter``, which writes
+* Add ``--details-out`` option to ``seqmagick2 quality-filter``, which writes
   details on each read processed.
-* Match barcode/primer ``seqmagick quality-filter`` against a trie; allows
+* Match barcode/primer ``seqmagick2 quality-filter`` against a trie; allows
   per-specimen barcodes.
-* Remove ``--failure-out`` option from ``seqmagick quality-filter``. See ``--details-out``
+* Remove ``--failure-out`` option from ``seqmagick2 quality-filter``. See ``--details-out``
 * Raise an error if number of codons does not match number of amino acids in
-  ``seqmagick backtrans-align``
+  ``seqmagick2 backtrans-align``
 * Add ``--sample`` subcommand (GH-31)
 
 0.4.0
 -----
 
 * Fix bug in ``--squeeze``
-* More informative messages in ``seqmagick primer-trim``
+* More informative messages in ``seqmagick2 primer-trim``
 * Added ``--alphabet`` flag to allow writing NEXUS (GH-23)
 * Exiting without error on SIGPIPE in extract-ids, info (GH-17)
 * Ambiguities are translated as 'X' in --translate (GH-16)
@@ -86,14 +86,14 @@ Changes for seqmagick
 * Cleanup, additional tests
 * Add ``--drop`` filter to convert and mogrify (GH-24)
 * Apply current umask when creating files (GH-26)
-* Support stdin in ``seqmagick info`` (GH-27)
+* Support stdin in ``seqmagick2 info`` (GH-27)
 * Support translating ambiguous nucleotides, if codon translation is unambiguous
 
 0.3.1
 -----
 
 * Fix bug in ``quality-filter`` MinLengthFilter
-* Case consistency in seqmagick
+* Case consistency in seqmagick2
 
 0.3.0
 -----
@@ -101,13 +101,13 @@ Changes for seqmagick
 * Internal reorganization - transformations are converted to partial functions,
   then applied.
 * Argument order now affects order of tranformation application.
-* Change default output format to 'align' for TTYs in seqmagick info
+* Change default output format to 'align' for TTYs in seqmagick2 info
 * Add BioPython as dependency (closes GH-7)
 * Add ``primer-trim`` subcommand
 * Add option to apply custom function(s) to sequences
 * Add new filtering options: ``--squeeze-threshold``, ``--min-ungapped-length``
   ``--include-from-file`` ``--exclude-from-file``
-* Removed seqmagick muscle
+* Removed seqmagick2 muscle
 * Added new subcommand ``quality-filter``
 * Added new subcommand ``extract-ids`` (closes GH-13)
 * Allow use of '-' to indicate stdin / stdout (closes GH-11)

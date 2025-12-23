@@ -11,7 +11,7 @@ import signal
 import sys
 import tempfile
 
-from seqmagick import fileformat
+from seqmagick2 import fileformat
 
 def get_umask():
     """

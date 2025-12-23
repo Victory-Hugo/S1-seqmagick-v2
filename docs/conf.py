@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# seqmagick documentation build configuration file, created by
+# seqmagick2 documentation build configuration file, created by
 # sphinx-quickstart on Thu May 19 16:18:13 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -20,7 +20,7 @@ import subprocess
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
-from seqmagick import __version__
+from seqmagick2 import __version__
 
 # -- General configuration -----------------------------------------------------
 
@@ -44,7 +44,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'seqmagick'
+project = u'seqmagick2'
 copyright = u'2011-{}, The Matsen Group'.format(time.strftime('%Y'))
 
 # The version info for the project you're documenting, acts as replacement for
@@ -69,7 +69,7 @@ subcommands = [
 
 for cmd in subcommands:
     print('generating help text for {}'.format(cmd))
-    p = subprocess.run(['../seqmagick.py', cmd, '-h'], stdout=subprocess.PIPE,
+    p = subprocess.run(['../seqmagick2.py', cmd, '-h'], stdout=subprocess.PIPE,
                        universal_newlines=True)
     with open(cmd.replace('-', '_') + '.help', 'w') as f:
         f.write(p.stdout)
@@ -132,7 +132,7 @@ html_theme = 'sphinxdoc'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '../logo/seqmagick_logo_small.png'
+html_logo = '../logo/seqmagick2_logo_small.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -186,7 +186,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'seqmagickdoc'
+htmlhelp_basename = 'seqmagick2doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -200,7 +200,7 @@ htmlhelp_basename = 'seqmagickdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'seqmagick.tex', u'seqmagick Documentation',
+  ('index', 'seqmagick2.tex', u'seqmagick2 Documentation',
    u'Matsen Group', 'manual'),
 ]
 
@@ -233,6 +233,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'seqmagick', u'seqmagick Documentation',
+    ('index', 'seqmagick2', u'seqmagick2 Documentation',
      [u'Matsen Group'], 1)
 ]

@@ -5,7 +5,7 @@ import sys
 
 from Bio import SeqIO
 
-from seqmagick import fileformat
+from seqmagick2 import fileformat
 
 from . import common
 

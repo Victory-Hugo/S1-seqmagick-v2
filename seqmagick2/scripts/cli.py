@@ -4,8 +4,8 @@ import argparse
 import logging
 import sys
 
-from seqmagick import __version__ as version
-from seqmagick import subcommands
+from seqmagick2 import __version__ as version
+from seqmagick2 import subcommands
 
 
 def main(argv=sys.argv[1:]):
@@ -33,11 +33,11 @@ def parse_arguments(argv):
     """
     Extract command-line arguments for different actions.
     """
-    parser = argparse.ArgumentParser(description='seqmagick - Manipulate ' + \
-       ' sequence files.', prog='seqmagick')
+    parser = argparse.ArgumentParser(description='seqmagick2 - Manipulate ' + \
+       ' sequence files.', prog='seqmagick2')
 
     parser.add_argument('-V', '--version', action='version',
-            version='seqmagick v' + version,
+            version='seqmagick2 v' + version,
             help="Print the version number and exit")
     parser.add_argument('-v', '--verbose', dest='verbosity',
             action='count', default=1,

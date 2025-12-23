@@ -2,9 +2,9 @@ import sys
 import unittest
 import tempfile
 
-from seqmagick.scripts import cli
+from seqmagick2.scripts import cli
 
-from seqmagick.test.integration import data_path
+from seqmagick2.test.integration import data_path
 
 
 class InfoMixin(object):

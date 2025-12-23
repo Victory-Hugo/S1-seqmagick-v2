@@ -17,7 +17,7 @@ from Bio.Data import CodonTable
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from seqmagick import fileformat
+from seqmagick2 import fileformat
 
 from . import common
 

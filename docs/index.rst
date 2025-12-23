@@ -1,4 +1,4 @@
-.. seqmagick documentation master file, created by
+.. seqmagick2 documentation master file, created by
    sphinx-quickstart on Thu May 19 16:18:13 2011.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -12,11 +12,11 @@
 
 .. raw:: html
 
-    <a href="http://github.com/fhcrc/seqmagick"><img style="position: absolute; top: 0; left: 0; border: 0;" src="_static/fork.png" alt="Fork me on GitHub"></a>
+    <a href="http://github.com/fhcrc/seqmagick2"><img style="position: absolute; top: 0; left: 0; border: 0;" src="_static/fork.png" alt="Fork me on GitHub"></a>
 
 
 =========
-seqmagick
+seqmagick2
 =========
 
 .. contents::
@@ -33,14 +33,14 @@ Motivation
 ==========
 
 We often have to convert between sequence formats and do little tasks on them,
-and it's not worth writing scripts for that.  Seqmagick is a kickass little
+and it's not worth writing scripts for that.  Seqmagick2 is a kickass little
 utility built in the spirit of imagemagick_ to expose the file format
 conversion in Biopython in a convenient way.  Instead of having a big mess of
 scripts, there is one that takes arguments::
 
-    seqmagick convert a.fasta b.phy    # convert from fasta to phylip
-    seqmagick mogrify --ungap a.fasta  # remove all gaps from a.fasta, in place
-    seqmagick info *.fasta             # describe all FASTA files in the current directory
+    seqmagick2 convert a.fasta b.phy    # convert from fasta to phylip
+    seqmagick2 mogrify --ungap a.fasta  # remove all gaps from a.fasta, in place
+    seqmagick2 info *.fasta             # describe all FASTA files in the current directory
 
 And more.
 
@@ -49,29 +49,29 @@ Installation
 
 Install the latest release with::
 
-    pip install seqmagick
+    pip install seqmagick2
 
 This should also install `BioPython`_. NumPy (which parts of BioPython
-depend on) is not required for ``seqmagick`` to function, but may be
+depend on) is not required for ``seqmagick2`` to function, but may be
 installed as a dependency of ``BioPython``.
 
 To install the bleeding edge version::
 
-    pip install git+https://github.com/fhcrc/seqmagick.git@master#egg-info=seqmagick
+    pip install git+https://github.com/fhcrc/seqmagick2.git@master#egg-info=seqmagick2
 
 Note that as of version 0.8.0, this package requires Python 3.5+. If
 you want to use the most recent version compatible with Python 2.7::
 
-  pip install seqmagick==0.6.2
+  pip install seqmagick2==0.6.2
 
 Use
 ===
 
-Seqmagick can be used to query information about sequence files, convert
+Seqmagick2 can be used to query information about sequence files, convert
 between types, and modify sequence files.  All functions are accessed through
 subcommands::
 
-    seqmagick <subcommand> [options] arguments
+    seqmagick2 <subcommand> [options] arguments
 
 List of Subcommands
 ===================
@@ -88,7 +88,7 @@ List of Subcommands
 Supported File Extensions
 =========================
 
-By default, ``seqmagick`` infers the file type from extension. Currently mapped
+By default, ``seqmagick2`` infers the file type from extension. Currently mapped
 extensions are:
 
 .. include:: extensions.rst
@@ -100,7 +100,7 @@ extensions are:
 Default Format
 --------------
 
-When reading from stdin or writing to stdout, ``seqmagick`` defaults to fasta
+When reading from stdin or writing to stdout, ``seqmagick2`` defaults to fasta
 format.  This behavior may be overridden with the ``--input-format`` and
 ``--output-format`` flags.
 
@@ -119,7 +119,7 @@ to be in FASTA format.
 Acknowledgements
 ================
 
-seqmagick is written and maintained by the `Matsen Group`_ at the Fred
+seqmagick2 is written and maintained by the `Matsen Group`_ at the Fred
 Hutchinson Cancer Research Center.
 
 
@@ -128,7 +128,7 @@ Contributing
 
 We welcome contributions! Simply fork the repository `on GitHub`_ and send a pull request.
 
-.. _`on GitHub`: http://github.com/fhcrc/seqmagick/
+.. _`on GitHub`: http://github.com/fhcrc/seqmagick2/
 .. _`Matsen Group`: http://matsen.fhcrc.org/
 .. _imagemagick: http://www.imagemagick.org/script/command-line-tools.php
 .. _`BioPython`: http://www.biopython.org/

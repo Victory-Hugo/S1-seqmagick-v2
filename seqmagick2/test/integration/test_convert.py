@@ -9,8 +9,8 @@ import sys
 import unittest
 import tempfile
 
-from seqmagick.subcommands.common import FileType
-from seqmagick.scripts import cli
+from seqmagick2.subcommands.common import FileType
+from seqmagick2.scripts import cli
 
 
 d = os.path.dirname(__file__)

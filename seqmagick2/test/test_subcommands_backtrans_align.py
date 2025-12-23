@@ -4,7 +4,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Data import CodonTable
 
-from seqmagick.subcommands import backtrans_align
+from seqmagick2.subcommands import backtrans_align
 
 class BatchTestCase(unittest.TestCase):
     def test_no_input(self):

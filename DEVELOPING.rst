@@ -1,5 +1,5 @@
 ======================
- Developing seqmagick
+ Developing seqmagick2
 ======================
 
 Requirements
@@ -57,7 +57,7 @@ Push one last time to master to trigger tests on travis::
 
   git push origin master
 
-Go to travis (https://travis-ci.org/fhcrc/seqmagick) and make sure the
+Go to travis (https://travis-ci.org/fhcrc/seqmagick2) and make sure the
 tests have completed.
 
 Add a new tag (see above). Push the tag to GitHub::

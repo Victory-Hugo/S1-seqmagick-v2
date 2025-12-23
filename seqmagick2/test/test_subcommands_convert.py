@@ -1,14 +1,14 @@
 """
-Tests for seqmagick.subcommands.convert - mostly integration with
-seqmagick.transform
+Tests for seqmagick2.subcommands.convert - mostly integration with
+seqmagick2.transform
 """
 import argparse
 import os
 import tempfile
 import unittest
 
-from seqmagick.subcommands import convert
-from seqmagick import transform
+from seqmagick2.subcommands import convert
+from seqmagick2 import transform
 
 # Test populating the transform
 class PopulateTransformsMixIn(object):

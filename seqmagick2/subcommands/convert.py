@@ -8,8 +8,8 @@ import random
 
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
-from seqmagick import transform
-from seqmagick.fileformat import from_handle
+from seqmagick2 import transform
+from seqmagick2.fileformat import from_handle
 
 from . import common
 
