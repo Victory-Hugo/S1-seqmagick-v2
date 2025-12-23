@@ -1,5 +1,5 @@
 """
-Filter reads based on quality scores
+Filter reads based on quality scores / 按质量分数过滤序列
 """
 
 import collections
@@ -72,35 +72,35 @@ def build_parser(parser):
         'sequence_file',
         type=FileType('r'),
         help="""Input fastq file. A fasta-format file may also be provided
-            if --input-qual is also specified.""")
+            if --input-qual is also specified. / 输入 fastq，若同时提供 --input-qual 也可用 fasta""")
     parser.add_argument(
         '--input-qual',
         type=FileType('r'),
         help="""The quality scores associated with the input file. Only
-            used if input file is fasta.""")
+            used if input file is fasta. / fasta 输入时的质量分数文件""")
     parser.add_argument(
         'output_file',
         type=FileType('w'),
-        help="""Output file. Format determined from extension.""")
+        help="""Output file. Format determined from extension. / 输出文件，格式由扩展名决定""")
 
-    output_group = parser.add_argument_group("Output")
+    output_group = parser.add_argument_group("Output / 输出")
     output_group.add_argument(
         '--report-out',
         type=FileType('w'),
         default=sys.stdout,
         help="""Output file for report [default:
-            stdout]""")
+            stdout] / 报告输出文件""")
     output_group.add_argument(
         '--details-out',
         type=FileType('w'),
-        help="""Output file to report fate of each sequence""")
+        help="""Output file to report fate of each sequence / 每条序列的处理结果输出""")
     output_group.add_argument(
         '--no-details-comment',
         action='store_false',
         default=True,
         dest='details_comment',
         help="""Do not write comment
-            lines with version and call to start --details-out""")
+            lines with version and call to start --details-out / 不写版本与命令注释行""")
 
     parser.add_argument(
         '--min-mean-quality',
@@ -108,14 +108,14 @@ def build_parser(parser):
         type=float,
         default=DEFAULT_MEAN_SCORE,
         help="""Minimum mean quality score for
-            each read [default: %(default)s]""")
+            each read [default: %(default)s] / 平均质量分数阈值""")
     parser.add_argument(
         '--min-length',
         metavar='LENGTH',
         type=int,
         default=200,
         help="""Minimum length to keep sequence [default:
-            %(default)s]""")
+            %(default)s] / 保留的最小长度""")
     parser.add_argument(
         '--max-length',
         metavar='LENGTH',
@@ -123,19 +123,19 @@ def build_parser(parser):
         default=1000,
         help="""Maximum length to keep before truncating
             [default: %(default)s]. This operation occurs before
-            --max-ambiguous""")
+            --max-ambiguous / 超过该长度先截断再进行其它过滤""")
 
-    window_group = parser.add_argument_group('Quality window options')
+    window_group = parser.add_argument_group('Quality window options / 质量滑窗选项')
     window_group.add_argument(
         '--quality-window-mean-qual',
         type=float,
         help="""Minimum quality score within the window defined by
-            --quality-window. [default: same as --min-mean-quality]""")
+            --quality-window. [default: same as --min-mean-quality] / 窗口内最小平均质量""")
     window_group.add_argument(
         '--quality-window-prop',
         help="""Proportion of
             reads within quality window to that must pass filter. Floats are [default:
-            %(default).1f]""",
+            %(default).1f] / 窗口内满足条件的比例""",
         default=1.0,
         type=typed_range(float, 0.0, 1.0))
     window_group.add_argument(
@@ -146,35 +146,35 @@ def build_parser(parser):
         help="""Window size for truncating sequences.  When set
             to a non-zero value, sequences are truncated where the mean mean
             quality within the window drops below --min-mean-quality.
-            [default: %(default)s]""")
+            [default: %(default)s] / 截断窗口大小""")
 
     parser.add_argument(
         '--ambiguous-action',
         choices=('truncate', 'drop'),
         help="""Action to take on ambiguous base in sequence (N's).
-            [default: no action]""")
+            [default: no action] / 含有 N 等不明确碱基时的处理""")
     parser.add_argument(
         '--max-ambiguous',
         default=None,
         help="""Maximum number
             of ambiguous bases in a sequence. Sequences exceeding this count
-            will be removed.""",
+            will be removed. / 不明确碱基最大数量""",
         type=int)
     parser.add_argument(
         '--pct-ambiguous',
         help="""Maximun percent of
             ambiguous bases in a sequence.  Sequences exceeding this percent
-            will be removed.""",
+            will be removed. / 不明确碱基最大百分比""",
         type=float)
 
-    barcode_group = parser.add_argument_group('Barcode/Primer')
+    barcode_group = parser.add_argument_group('Barcode/Primer / 条形码与引物')
     primer_group = barcode_group.add_mutually_exclusive_group()
     primer_group.add_argument(
         '--primer', help="""IUPAC ambiguous primer to
-            require""")
+            require / IUPAC 简并引物""")
     primer_group.add_argument(
         '--no-primer',
-        help="""Do not use a primer.""",
+        help="""Do not use a primer. / 不使用引物""",
         action='store_const',
         const='',
         dest='primer')
@@ -184,25 +184,25 @@ def build_parser(parser):
             sample_id,barcode[,primer] in the rows. A single primer for all
             sequences may be specified with `--primer`, or `--no-primer` may be
             used to indicate barcodes should be used without a primer
-            check.""",
+            check. / 条形码 CSV：sample_id,barcode[,primer]""",
         type=FileType('r'))
     barcode_group.add_argument(
         '--barcode-header',
         action='store_true',
         default=False,
         help="""Barcodes have a header row [default:
-            %(default)s]""")
+            %(default)s] / 条形码文件包含表头""")
     barcode_group.add_argument(
         '--map-out',
         help="""Path to write
-            sequence_id,sample_id pairs""",
+            sequence_id,sample_id pairs / 输出 sequence_id 与 sample_id 对应表""",
         type=FileType('w'),
         metavar='SAMPLE_MAP')
     barcode_group.add_argument(
         '--quoting',
         help="""A string naming an
             attribute of the csv module defining the quoting behavior for
-            `SAMPLE_MAP`.  [default: %(default)s]""",
+            `SAMPLE_MAP`.  [default: %(default)s] / CSV 引号策略""",
         default='QUOTE_MINIMAL',
         choices=[s for s in dir(csv) if s.startswith('QUOTE_')])
 

@@ -1,5 +1,5 @@
 """
-Convert between sequence formats
+Convert between sequence formats / 序列格式转换
 """
 import argparse
 import copy
@@ -29,7 +29,8 @@ def _parse_rename_delimiter(value):
         return '\t'
     if value == ',':
         return ','
-    raise argparse.ArgumentTypeError("Delimiter must be ',' or '\\\\t'.")
+    raise argparse.ArgumentTypeError(
+        "Delimiter must be ',' or '\\\\t'. / 分隔符只能是 ',' 或 '\\\\t'.")
 
 
 class RenameDelimiterAction(argparse.Action):
@@ -67,27 +68,29 @@ def add_options(parser):
     Add optional arguments to the parser
     """
     partial_action = common.partial_append_action
-    file_mods = parser.add_argument_group("Sequence File Modification")
+    file_mods = parser.add_argument_group("Sequence File Modification / 文件级修改")
     file_mods.add_argument('--line-wrap', dest='line_wrap', metavar='N',
         type=int, help='Adjust line wrap for sequence strings.  '
         'When N is 0, all line breaks are removed. Only fasta files '
-        'are supported for the output format.')
+        'are supported for the output format. / 调整换行长度，N=0 表示不换行')
     file_mods.add_argument('--sort', dest='sort',
         choices=['length-asc', 'length-desc', 'name-asc', 'name-desc'],
         help='Perform sorting by length or name, ascending or descending. '
-        'ASCII sorting is performed for names')
+        'ASCII sorting is performed for names / 按长度或名称排序')
 
     parser.epilog = """Filters using regular expressions are case-sensitive
-    by default. Append "(?i)" to a pattern to make it case-insensitive."""
+    by default. Append "(?i)" to a pattern to make it case-insensitive.
+    / 正则过滤默认区分大小写，可在模式后加 (?i) 忽略大小写。"""
 
-    seq_mods = parser.add_argument_group("Sequence Modificaton")
+    seq_mods = parser.add_argument_group("Sequence Modificaton / 序列修改")
     seq_mods.add_argument('--apply-function', type=module_function,
             metavar='/path/to/module.py:function_name[:parameter]',
             help="""Specify a custom function to apply to the input sequences,
             specified as /path/to/file.py:function_name. Function should accept
             an iterable of Bio.SeqRecord objects, and yield SeqRecords. If the
             parameter is specified, it will be passed as a string as the second
-            argument to the function. Specify more than one to chain.""",
+            argument to the function. Specify more than one to chain.
+            / 指定自定义函数，格式：/path/to/file.py:function_name[:parameter]""",
             default=[], action='append')
     seq_mods.add_argument('--cut', dest='transforms',
             metavar="start:end[,start2:end2]",
@@ -99,169 +102,177 @@ def add_options(parser):
             negative start may be provided to indicate an offset from the end
             of the sequence. Note that to prevent negative numbers being
             interpreted as flags, this should be written with an equals
-            sign between `--cut` and the argument, e.g.: `--cut=-10:`""")
+            sign between `--cut` and the argument, e.g.: `--cut=-10:`
+            / 保留指定区间（1 起始），支持负数，从末端计数""")
     seq_mods.add_argument('--relative-to', dest='cut_relative', metavar='ID',
             help="""Apply --cut relative to the indexes of non-gap residues in
-            sequence identified by ID""")
+            sequence identified by ID / 以指定 ID 的非缺口坐标为基准执行 --cut""")
     seq_mods.add_argument('--drop', dest='transforms',
             metavar='start:end[,start2:end2]',
             type=common.sequence_slices,
             action=partial_action(transform.drop_columns, 'slices'),
-            help="""Remove the residues at the specified indices. Same format as `--cut`.""")
+            help="""Remove the residues at the specified indices. Same format as `--cut`.
+            / 删除指定区间（同 --cut 格式）""")
     seq_mods.add_argument('--dash-gap',
             action=partial_action(transform.dashes_cleanup), dest='transforms',
             help="""Replace any of the characters "?.:~" with a "-" for all
-            sequences""")
+            sequences / 将 "?.:~" 替换为 "-" """)
     seq_mods.add_argument('--lower',
             action=partial_action(transform.lower_sequences),
-            dest='transforms', help='Translate the sequences to lower case')
+            dest='transforms', help='Translate the sequences to lower case / 转小写')
     seq_mods.add_argument('--mask', metavar="start1:end1[,start2:end2]",
             action=partial_action(transform.multi_mask_sequences, 'slices'),
             type=common.sequence_slices, dest='transforms', help="""Replace
             residues in 1-indexed slice with gap-characters. If --relative-to
             is also specified, coordinates are relative to the sequence ID
-            provided.""")
+            provided. / 将指定区间替换为缺口字符""")
     seq_mods.add_argument('--reverse',
             action=partial_action(transform.reverse_sequences),
-            dest='transforms', help='Reverse the order of sites in sequences')
+            dest='transforms', help='Reverse the order of sites in sequences / 反转序列')
     seq_mods.add_argument('--reverse-complement', dest='transforms',
             action=partial_action(transform.reverse_complement_sequences),
-            help='Convert sequences into reverse complements')
+            help='Convert sequences into reverse complements / 反向互补')
     seq_mods.add_argument('--squeeze', action=partial_action(transform.squeeze),
             dest='transforms',
             help='''Remove any gaps that are present in the same
             position across all sequences in an alignment (equivalent to
-            --squeeze-threshold=1.0)''')
+            --squeeze-threshold=1.0) / 删除所有序列同列缺口''')
     seq_mods.add_argument('--squeeze-threshold', dest='transforms',
             action=partial_action(transform.squeeze, 'gap_threshold'),
             type=common.typed_range(float, 0.0, 1.0),
             metavar='PROP', help="""Trim columns from an alignment which
-            have gaps in least the specified proportion of sequences.""")
+            have gaps in least the specified proportion of sequences.
+            / 删除缺口比例达到阈值的列""")
     seq_mods.add_argument('--transcribe', dest='transforms',
             action=partial_action(transform.transcribe, 'transcribe'),
             choices=('dna2rna', 'rna2dna'), help="""Transcription and back
             transcription for generic DNA and RNA. Source sequences must be the
             correct alphabet or this action will likely produce incorrect
-            results.""")
+            results. / DNA/RNA 转录与反转录""")
     seq_mods.add_argument('--translate', dest='transforms',
             action=partial_action(transform.translate, 'translate'),
             choices=['dna2protein', 'rna2protein', 'dna2proteinstop',
                 'rna2proteinstop'], help="""Translate from generic DNA/RNA to
             proteins. Options with "stop" suffix will NOT translate through
             stop codons .  Source sequences must be the correct alphabet or
-            this action will likely produce incorrect results.""")
+            this action will likely produce incorrect results.
+            / 翻译为蛋白序列，带 stop 的选项遇终止密码子会停止""")
     seq_mods.add_argument('--ungap',
             action=partial_action(transform.ungap_sequences),
-            dest='transforms', help='Remove gaps in the sequence alignment')
+            dest='transforms', help='Remove gaps in the sequence alignment / 去除缺口')
     seq_mods.add_argument('--upper',
             action=partial_action(transform.upper_sequences),
-            dest='transforms', help='Translate the sequences to upper case')
+            dest='transforms', help='Translate the sequences to upper case / 转大写')
 
-    seq_select = parser.add_argument_group("Record Selection")
+    seq_select = parser.add_argument_group("Record Selection / 序列筛选")
 
     seq_select.add_argument('--deduplicate-sequences',
         action='store_const', const=None, default=False,
          dest='deduplicate_sequences', help='Remove any duplicate sequences '
-         'by sequence content, keep the first instance seen')
+         'by sequence content, keep the first instance seen / 按序列内容去重')
     seq_select.add_argument('--deduplicated-sequences-file', action='store',
         metavar='FILE', dest='deduplicate_sequences', default=False,
         type=common.FileType('wt'),
-        help='Write all of the deduplicated sequences to a file')
+        help='Write all of the deduplicated sequences to a file / 输出去重后的序列')
     seq_select.add_argument('--deduplicate-taxa',
             action=partial_action(transform.deduplicate_taxa),
             dest='transforms', help="""Remove any duplicate sequences by ID,
-            keep the first instance seen""")
+            keep the first instance seen / 按 ID 去重""")
     seq_select.add_argument('--exclude-from-file', metavar='FILE',
             type=common.FileType('rt'), help="""Filter sequences, removing
-            those sequence IDs in the specified file""", dest='transforms',
+            those sequence IDs in the specified file / 移除文件中列出的 ID""", dest='transforms',
             action=partial_action(transform.exclude_from_file, 'handle'))
     seq_select.add_argument('--include-from-file', metavar='FILE',
             type=common.FileType('rt'), help="""Filter sequences, keeping only
-            those sequence IDs in the specified file""", dest='transforms',
+            those sequence IDs in the specified file / 仅保留文件中列出的 ID""", dest='transforms',
             action=partial_action(transform.include_from_file, 'handle'))
     seq_select.add_argument('--head', metavar='N', dest='transforms',
             action=partial_action(transform.head, 'head'), help="""Trim
-            down to top N sequences. With the leading `-', print all but the last N sequences.""")
+            down to top N sequences. With the leading `-', print all but the last N sequences.
+            / 保留前 N 条（用 -N 表示去掉最后 N 条）""")
     seq_select.add_argument('--max-length', dest='transforms', metavar='N',
             action=partial_action(transform.max_length_discard, 'max_length'),
             type=int, help="""Discard any sequences beyond the specified
             maximum length.  This operation occurs *before* all length-changing
-            options such as cut and squeeze.""")
+            options such as cut and squeeze. / 先按最大长度过滤""")
     seq_select.add_argument('--min-length', dest='transforms', metavar='N',
             action=partial_action(transform.min_length_discard, 'min_length'),
             type=int, help="""Discard any sequences less than the specified
-            minimum length.  This operation occurs *before* cut and squeeze.""")
+            minimum length.  This operation occurs *before* cut and squeeze.
+            / 先按最小长度过滤""")
     seq_select.add_argument('--min-ungapped-length', metavar='N',
             action=partial_action(transform.min_ungap_length_discard,
                 'min_length'), type=int, help="""Discard any sequences less
                 than the specified minimum length, excluding gaps. This
-                operation occurs *before* cut and squeeze.""",
+                operation occurs *before* cut and squeeze. / 按去缺口长度过滤""",
                 dest='transforms')
     seq_select.add_argument('--pattern-include', metavar='REGEX',
             action=partial_action(transform.name_include, 'filter_regex'),
             dest='transforms', help="""Filter the sequences by regular
-            expression in ID or description""")
+            expression in ID or description / 按 ID/描述正则匹配保留""")
     seq_select.add_argument('--pattern-exclude', metavar='REGEX',
             action=partial_action(transform.name_exclude, 'filter_regex'),
             dest='transforms', help="""Filter the sequences by regular
-            expression in ID or description""")
+            expression in ID or description / 按 ID/描述正则匹配排除""")
     seq_select.add_argument('--prune-empty',
             action=partial_action(transform.prune_empty), dest='transforms',
-            help="Prune sequences containing only gaps ('-')")
+            help="Prune sequences containing only gaps ('-') / 移除全为缺口的序列")
     seq_select.add_argument('--sample', metavar='N', dest='transforms', type=int,
             action=partial_action(transform.sample, 'k'),
-            help = """ Select a random sampling of sequences """)
+            help = """ Select a random sampling of sequences / 随机抽样 """)
     seq_select.add_argument('--sample-seed', metavar='N', type=int,
-            help = """Set random seed for sampling of sequences""")
+            help = """Set random seed for sampling of sequences / 随机种子""")
     seq_select.add_argument('--seq-pattern-include', metavar='REGEX',
             action=partial_action(transform.seq_include, 'filter_regex'),
             dest='transforms', help="""Filter the sequences by regular
-            expression in sequence""")
+            expression in sequence / 按序列内容正则保留""")
     seq_select.add_argument('--seq-pattern-exclude', metavar='REGEX',
             action=partial_action(transform.seq_exclude, 'filter_regex'),
             dest='transforms', help="""Filter the sequences by regular
-            expression in sequence""")
+            expression in sequence / 按序列内容正则排除""")
     seq_select.add_argument('--tail', metavar='N', dest='transforms',
             action=partial_action(transform.tail, 'tail'),
-        help="""Trim down to bottom N sequences.  Use +N to output sequences starting with the Nth.""")
+        help="""Trim down to bottom N sequences.  Use +N to output sequences starting with the Nth.
+        / 保留最后 N 条，用 +N 从第 N 条开始输出""")
 
-    id_mods = parser.add_argument_group("Sequence ID Modification")
+    id_mods = parser.add_argument_group("Sequence ID Modification / 序列 ID 修改")
     id_mods.add_argument('--first-name',
             action=partial_action(transform.first_name_capture),
             dest='transforms', help='''Take only the first whitespace-delimited
-            word as the name of the sequence''')
+            word as the name of the sequence / 仅保留首个空白前的名称''')
     id_mods.add_argument('--name-suffix', metavar='SUFFIX',
             action=partial_action(transform.name_append_suffix, 'suffix'),
-            dest='transforms', help='Append a suffix to all IDs.')
+            dest='transforms', help='Append a suffix to all IDs. / 为所有 ID 追加后缀')
     id_mods.add_argument('--name-prefix', metavar='PREFIX',
             action=partial_action(transform.name_insert_prefix, 'prefix'),
             dest='transforms', help="""Insert a prefix for all
-            IDs.""")
+            IDs. / 为所有 ID 添加前缀""")
     id_mods.add_argument('--pattern-replace', nargs=2,
             metavar=('search_pattern', 'replace_pattern'),
             action=partial_action(transform.name_replace, ('search_regex',
                 'replace_pattern')),
             dest='transforms', help="""Replace regex pattern "search_pattern"
-            with "replace_pattern" in sequence ID and description""")
+            with "replace_pattern" in sequence ID and description
+            / 在 ID 和描述中替换正则""")
     id_mods.add_argument('--strip-range', dest='transforms',
             action=partial_action(transform.strip_range), help="""Strip ranges
-            from sequences IDs, matching </x-y>""")
+            from sequences IDs, matching </x-y> / 移除 ID 中形如 </x-y> 的区间""")
     id_mods.add_argument('--rename', metavar='MAP',
             action=RenameAction, type=common.FileType('rt'),
             help="""Rename sequence IDs based on a
-            two-column map file (old ID, new ID).""")
+            two-column map file (old ID, new ID). / 使用映射表重命名 ID""")
     id_mods.add_argument('--rename-delimiter', dest='rename_delimiter',
             default='\\t', action=RenameDelimiterAction,
-            help="Delimiter for --rename map file: ',' or '\\t' (default: \\t).")
+            help="Delimiter for --rename map file: ',' or '\\t' (default: \\t). / 映射表分隔符")
 
-    format_group = parser.add_argument_group('Format Options')
+    format_group = parser.add_argument_group('Format Options / 格式选项')
     format_group.add_argument('--input-format', metavar='FORMAT',
-            help="Input file format (default: determine from extension)")
+            help="Input file format (default: determine from extension) / 输入格式")
     format_group.add_argument('--output-format', metavar='FORMAT',
-            help="Output file format (default: determine from extension)")
+            help="Output file format (default: determine from extension) / 输出格式")
 
     parser.add_argument('--alphabet', choices=ALPHABETS,
-            help="""Input alphabet. Required for writing NEXUS.""")
+            help="""Input alphabet. Required for writing NEXUS. / 指定字母表（写 NEXUS 必需）""")
 
     return parser
 
@@ -272,8 +283,8 @@ def build_parser(parser):
     """
     add_options(parser)
     parser.add_argument('source_file', type=common.FileType('rt'),
-                        help="Input sequence file")
-    parser.add_argument('dest_file', help="Output file")
+                        help="Input sequence file / 输入序列文件")
+    parser.add_argument('dest_file', help="Output file / 输出文件")
 
     return parser
 

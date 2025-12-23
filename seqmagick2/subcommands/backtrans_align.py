@@ -1,9 +1,9 @@
 """
 Given a protein alignment and unaligned nucleotides, align the nucleotides
-using the protein alignment.
+using the protein alignment. / 用蛋白比对结果指导核酸对齐
 
 Protein and nucleotide sequence files must contain the same number of
-sequences, in the same order, with the same IDs.
+sequences, in the same order, with the same IDs. / 蛋白与核酸序列数量、顺序、ID 必须一致
 """
 
 # TODO: Add tests
@@ -30,20 +30,22 @@ TRANSLATION_TABLES = {
 
 def build_parser(parser):
     parser.add_argument(
-        'protein_align', type=common.FileType('r'), help='Protein Alignment')
+        'protein_align', type=common.FileType('r'),
+        help='Protein Alignment / 蛋白比对文件')
     parser.add_argument(
-        'nucl_align', type=common.FileType('r'), help='FASTA Alignment')
+        'nucl_align', type=common.FileType('r'),
+        help='FASTA Alignment / 核酸序列文件（未对齐）')
     parser.add_argument(
         '-o', '--out-file', type=common.FileType('w'),
         default=sys.stdout, metavar='destination_file',
-        help='Output destination. Default: STDOUT')
+        help='Output destination. Default: STDOUT / 输出位置')
     parser.add_argument(
         '-t', '--translation-table', choices=TRANSLATION_TABLES,
         default='standard-ambiguous',
-        help='Translation table to use. [Default: %(default)s]')
+        help='Translation table to use. [Default: %(default)s] / 选择密码子表')
     parser.add_argument(
         '-a', '--fail-action', choices=('fail', 'warn', 'none'), default='fail',
-        help='Action to take on an ambiguous codon [default: %(default)s]')
+        help='Action to take on an ambiguous codon [default: %(default)s] / 遇到不明确密码子的处理方式')
 
     return parser
 

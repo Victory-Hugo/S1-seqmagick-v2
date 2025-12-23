@@ -1,5 +1,5 @@
 """
-Extract the sequence IDs from a file
+Extract the sequence IDs from a file / 从文件中提取序列 ID
 """
 import sys
 
@@ -12,15 +12,16 @@ from . import common
 
 def build_parser(parser):
     parser.add_argument(
-        'sequence_file', type=common.FileType('rt'), help="Sequence file")
+        'sequence_file', type=common.FileType('rt'),
+        help="Sequence file / 序列文件")
     parser.add_argument(
         '-o', '--output-file', type=common.FileType('wt'), default=sys.stdout,
-        help="Destination file")
+        help="Destination file / 输出文件")
     parser.add_argument(
-        '--input-format', help="Input format for sequence file")
+        '--input-format', help="Input format for sequence file / 输入序列文件格式")
     parser.add_argument(
         '-d', '--include-description', action='store_true', default=False,
-        help='Include the sequence description in output [default: %(default)s]')
+        help='Include the sequence description in output [default: %(default)s] / 输出中包含描述信息')
 
 
 def action(arguments):

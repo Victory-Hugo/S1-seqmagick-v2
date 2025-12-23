@@ -1,5 +1,5 @@
 """
-Modify sequence file(s) in place.
+Modify sequence file(s) in place. / 原地修改序列文件
 """
 
 import logging
@@ -14,7 +14,8 @@ def build_parser(parser):
 
     parser.add_argument(
         'input_files', metavar="sequence_file", nargs='+',
-        type=common.FileType('rt'), help="Sequence file(s) to mogrify")
+        type=common.FileType('rt'),
+        help="Sequence file(s) to mogrify / 需要原地修改的序列文件")
 
     return parser
 

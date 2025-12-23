@@ -1,5 +1,5 @@
 """
-Info action
+Info action / 信息统计
 """
 
 import collections
@@ -16,23 +16,24 @@ from seqmagick2 import fileformat
 from . import common
 
 def build_parser(parser):
-    parser.add_argument('source_files', metavar='sequence_files', nargs='+')
+    parser.add_argument('source_files', metavar='sequence_files', nargs='+',
+                        help="Input sequence files / 输入序列文件")
     parser.add_argument('--input-format', help="""Input format. Overrides
-            extension for all input files""")
+            extension for all input files / 输入格式，覆盖文件扩展名判断""")
     parser.add_argument('--out-file', dest='destination_file',
             type=common.FileType('wt'), default=sys.stdout,
             metavar='destination_file',
-            help='Output destination. Default: STDOUT')
+            help='Output destination. Default: STDOUT / 输出位置，默认 STDOUT')
     parser.add_argument('--format', dest='output_format',
         choices=('tab', 'csv', 'align'), help="""Specify output format as
         tab-delimited, CSV or aligned in a borderless table.  Default is
         tab-delimited if the output is directed to a file, aligned if output to
-        the console.""")
+        the console. / 输出格式：tab、csv 或对齐文本表格。默认：写文件为 tab，输出到终端为对齐""")
     parser.add_argument('--threads', default=1,
             type=int,
-            help="""Number of threads (CPUs). [%(default)s] """)
+            help="""Number of threads (CPUs). [%(default)s] / 线程数""")
     parser.add_argument('-more', '--more', dest='more', action='store_true',
-            help="Output per-sequence details (length, GC%%, N count, gaps).")
+            help="Output per-sequence details (length, GC%%, N count, gaps). / 输出每条序列详情")
 
 class SeqInfoWriter(object):
     """
