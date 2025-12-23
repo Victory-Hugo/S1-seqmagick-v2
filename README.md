@@ -76,16 +76,16 @@ python -m seqmagick2 --help
     -   修剪到指定的残基范围
     -   改变大小写
     -   按长度或 ID 排序
-    -   [更多](http://seqmagick2.readthedocs.org/en/latest/convert_mogrify.html)
--   显示序列文件的 [信息](http://seqmagick2.readthedocs.org/en/latest/info.html)
+    -   [更多](http://seqmagick.readthedocs.org/en/latest/convert_mogrify.html)
+-   显示序列文件的 [信息](http://seqmagick.readthedocs.org/en/latest/info.html)
 -   通过以下方式对序列文件进行子集化：
     -   位置
     -   ID
     -   去重复
-    -   [更多](http://seqmagick2.readthedocs.org/en/latest/convert_mogrify.html)
--   通过[质量分数](http://seqmagick2.readthedocs.org/en/latest/quality_filter.html)过滤序列
--   将比对序列修剪到由正向和反向引物定义的[感兴趣区域](http://seqmagick2.readthedocs.org/en/latest/primer_trim.html)
+    -   [更多](http://seqmagick.readthedocs.org/en/latest/convert_mogrify.html)
+-   通过[质量分数](http://seqmagick.readthedocs.org/en/latest/quality_filter.html)过滤序列
+-   将比对序列修剪到由正向和反向引物定义的[感兴趣区域](http://seqmagick.readthedocs.org/en/latest/primer_trim.html)
 
-想了解更多？前往[文档](http://seqmagick2.readthedocs.org/en/latest/)。
+想了解更多？前往[文档](http://seqmagick.readthedocs.org/en/latest/)。
 
 `seqmagick2` 是 GPL v3 下的自由软件。

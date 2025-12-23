@@ -6,164 +6,91 @@ Protein and nucleotide sequence files must contain the same number of
 sequences, in the same order, with the same IDs. / 蛋白与核酸序列数量、顺序、ID 必须一致
 """
 
-# TODO: Add tests
-
-import itertools
-import logging
+import argparse
 import sys
 
-from Bio import SeqIO
-from Bio.Data import CodonTable
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
-
-from seqmagick2 import fileformat
+from seqmagick2 import pal2nal
 
 from . import common
 
-TRANSLATION_TABLES = {
-    'standard': CodonTable.unambiguous_dna_by_name["Standard"],
-    'standard-ambiguous': CodonTable.ambiguous_dna_by_name["Standard"],
-    'vertebrate-mito': CodonTable.unambiguous_dna_by_name["Vertebrate Mitochondrial"]
-}
-
 
 def build_parser(parser):
+    parser.formatter_class = argparse.RawDescriptionHelpFormatter
+    parser.epilog = (
+        "Common examples / 常用示例:\n"
+        "  seqmagick2 backtrans-align protein.aln nuc.fasta -output fasta\n"
+        "  seqmagick2 backtrans-align protein.aln nuc1.fasta nuc2.fasta -output clustal\n"
+        "  seqmagick2 backtrans-align protein.aln nuc.fasta -output paml -codontable 2\n"
+        "  seqmagick2 backtrans-align protein.aln nuc.fasta -nogap -nomismatch\n"
+        "\n"
+        "Codon tables / 密码子表:\n"
+        "  1  Universal code / 通用密码子表\n"
+        "  2  Vertebrate mitochondrial code / 脊椎动物线粒体\n"
+        "  3  Yeast mitochondrial code / 酵母线粒体\n"
+        "  4  Mold/Protozoan/Coelenterate mitochondrial & Mycoplasma/Spiroplasma\n"
+        "     / 霉菌/原生动物/腔肠动物线粒体 与 支原体/螺旋体\n"
+        "  5  Invertebrate mitochondrial / 无脊椎动物线粒体\n"
+        "  6  Ciliate/Dasycladacean/Hexamita nuclear / 纤毛虫/伞藻/六鞭毛虫核\n"
+        "  9  Echinoderm and Flatworm mitochondrial / 棘皮动物与扁形动物线粒体\n"
+        " 10  Euplotid nuclear / 欧普洛特核\n"
+        " 11  Bacterial/Archaeal/Plant plastid / 细菌/古菌/植物质体\n"
+        " 12  Alternative yeast nuclear / 酵母核（替代表）\n"
+        " 13  Ascidian mitochondrial / 海鞘线粒体\n"
+        " 14  Alternative flatworm mitochondrial / 扁形动物线粒体（替代表）\n"
+        " 15  Blepharisma nuclear / 纤毛虫 Blepharisma 核\n"
+        " 16  Chlorophycean mitochondrial / 绿藻线粒体\n"
+        " 21  Trematode mitochondrial / 吸虫线粒体\n"
+        " 22  Scenedesmus obliquus mitochondrial / 斜生栅藻线粒体\n"
+        " 23  Thraustochytrium mitochondrial / Thraustochytrium 线粒体\n"
+    )
     parser.add_argument(
         'protein_align', type=common.FileType('r'),
         help='Protein Alignment / 蛋白比对文件')
     parser.add_argument(
-        'nucl_align', type=common.FileType('r'),
-        help='FASTA Alignment / 核酸序列文件（未对齐）')
+        'nucl_align', nargs='+', type=common.FileType('r'),
+        help='Nucleotide FASTA file(s) / 核酸序列文件（可多个）')
     parser.add_argument(
         '-o', '--out-file', type=common.FileType('w'),
         default=sys.stdout, metavar='destination_file',
         help='Output destination. Default: STDOUT / 输出位置')
     parser.add_argument(
-        '-t', '--translation-table', choices=TRANSLATION_TABLES,
-        default='standard-ambiguous',
-        help='Translation table to use. [Default: %(default)s] / 选择密码子表')
+        '-output', dest='outform',
+        choices=('clustal', 'paml', 'fasta', 'codon'),
+        default='clustal',
+        help='Output format; default = clustal / 输出格式')
     parser.add_argument(
-        '-a', '--fail-action', choices=('fail', 'warn', 'none'), default='fail',
-        help='Action to take on an ambiguous codon [default: %(default)s] / 遇到不明确密码子的处理方式')
+        '-blockonly', action='store_true',
+        help='Show only user specified blocks / 仅输出指定区块')
+    parser.add_argument(
+        '-nogap', action='store_true',
+        help='Remove columns with gaps and inframe stop codons / 移除含缺口或终止密码子的列')
+    parser.add_argument(
+        '-nomismatch', action='store_true',
+        help='Remove mismatched codons / 移除不匹配密码子')
+    parser.add_argument(
+        '-codontable', type=int, choices=sorted(pal2nal.CODON_TABLES.keys()),
+        default=1,
+        help='Codon table number / 密码子表编号（见下方列表）')
+    parser.add_argument(
+        '-html', action='store_true',
+        help='HTML output / HTML 输出')
+    parser.add_argument(
+        '-nostderr', action='store_true',
+        help='No STDERR messages / 不输出 STDERR 提示')
 
     return parser
 
 
-def batch(iterable, chunk_size):
-    """
-    Return items from iterable in chunk_size bits.
-
-    If len(iterable) % chunk_size > 0, the last item returned will be shorter.
-    """
-    i = iter(iterable)
-    while True:
-        r = list(itertools.islice(i, chunk_size))
-        if not r:
-            break
-        yield r
-
-
-class AlignmentMapper(object):
-    def __init__(self, translation_table, unknown_action='fail'):
-        self.translation_table = translation_table
-        self.unknown_action = unknown_action
-
-    def _validate_translation(self, aligned_prot, aligned_nucl):
-        """
-        Given a seq for protein and nucleotide, ensure that the translation holds
-        """
-        codons = [''.join(i) for i in batch(str(aligned_nucl), 3)]
-        for codon, aa in zip(codons, str(aligned_prot)):
-            # Check gaps
-            if codon == '---' and aa == '-':
-                continue
-
-            try:
-                trans = self.translation_table.forward_table[codon]
-                if not trans == aa:
-                    raise ValueError("Codon {0} translates to {1}, not {2}".format(
-                        codon, trans, aa))
-            except (KeyError, CodonTable.TranslationError):
-                if aa != 'X':
-                    if self.unknown_action == 'fail':
-                        raise ValueError("Unknown codon: {0} mapped to {1}".format(
-                            codon, aa))
-                    elif self.unknown_action == 'warn':
-                        logging.warn('Cannot verify that unknown codon %s '
-                                     'maps to %s', codon, aa)
-        return True
-
-    def map_alignment(self, prot_seq, nucl_seq):
-        """
-        Use aligned prot_seq to align nucl_seq
-        """
-        if prot_seq.id != nucl_seq.id:
-            logging.warning(
-                'ID mismatch: %s != %s. Are the sequences in the same order?',
-                prot_seq.id, nucl_seq.id)
-
-        # Ungap nucleotides
-        codons = batch(str(nucl_seq.seq.replace('-', '')), 3)
-        codons = [''.join(i) for i in codons]
-        codon_iter = iter(codons)
-
-        ungapped_prot = str(prot_seq.seq).replace('-', '')
-
-        if len(ungapped_prot) != len(codons):
-            table = self.translation_table.forward_table
-            prot_str = ' '.join(' ' + p + ' ' for p in ungapped_prot)
-            codon_str = ' '.join(codons)
-            trans_str = ' '.join(' ' + table.get(codon, 'X') + ' '
-                                 for codon in codons)
-            raise ValueError("""Length of codon sequence ({0}) does not match \
-length of protein sequence ({1}) for {2}
-Protein:       {3}
-Codons:        {4}
-Trans. Codons: {5}""".format(len(codons), len(ungapped_prot), nucl_seq.id, prot_str,
-                            codon_str, trans_str))
-
-        try:
-            nucl_align = ['---' if p == '-' else next(codon_iter)
-                          for p in str(prot_seq.seq)]
-        except StopIteration:
-            assert False  # Should be checked above
-
-        result = SeqRecord(Seq(''.join(nucl_align)), id=nucl_seq.id,
-                           description=nucl_seq.description)
-
-        # Validate
-        self._validate_translation(prot_seq.seq.upper(), result.seq.upper())
-
-        return result
-
-    def map_all(self, prot_alignment, nucl_sequences):
-        """
-        Convert protein sequences to nucleotide alignment
-        """
-        zipped = itertools.zip_longest(prot_alignment, nucl_sequences)
-        for p, n in zipped:
-            if p is None:
-                raise ValueError("Exhausted protein sequences")
-            elif n is None:
-                raise ValueError("Exhausted nucleotide sequences")
-            yield self.map_alignment(p, n)
-
 def action(arguments):
-    """
-    Run
-    """
-    # Ignore SIGPIPE, for head support
     common.exit_on_sigpipe()
-    logging.basicConfig()
 
-    prot_sequences = SeqIO.parse(arguments.protein_align,
-                                 fileformat.from_handle(arguments.protein_align))
-    nucl_sequences = SeqIO.parse(arguments.nucl_align,
-                                 fileformat.from_handle(arguments.nucl_align))
-
-    instance = AlignmentMapper(TRANSLATION_TABLES[arguments.translation_table],
-                               arguments.fail_action)
-
-    SeqIO.write(instance.map_all(prot_sequences, nucl_sequences),
-                arguments.out_file, fileformat.from_filename(arguments.out_file.name))
+    protein_path = arguments.protein_align.name
+    nuc_paths = [n.name for n in arguments.nucl_align]
+    try:
+        pal2nal.run(protein_path, nuc_paths, arguments.out_file, sys.stderr, arguments)
+    finally:
+        if hasattr(arguments.protein_align, 'close'):
+            arguments.protein_align.close()
+        for handle in arguments.nucl_align:
+            if hasattr(handle, 'close'):
+                handle.close()
