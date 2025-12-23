@@ -3,6 +3,7 @@
 import os
 import sys
 import subprocess
+from pathlib import Path
 from setuptools import setup, find_packages
 
 subprocess.call(
@@ -12,8 +13,13 @@ subprocess.call(
      '|| rm -f seqmagick2/data/ver.tmp'),
     shell=True, stderr=open(os.devnull, "w"))
 
-# must import __version__ after call to 'git describe' above
-from seqmagick2 import __version__
+def _read_version():
+    version_file = Path(__file__).parent / 'seqmagick2' / 'data' / 'ver'
+    if version_file.exists():
+        return version_file.read_text(encoding='utf-8').strip()
+    return '1.0.0'
+
+__version__ = _read_version()
 
 setup(name='seqmagick2',
       version=__version__,
