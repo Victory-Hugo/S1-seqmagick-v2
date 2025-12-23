@@ -227,6 +227,11 @@ def _is_rename_header(row):
 
 
 def _load_rename_map(handle, delimiter):
+    if hasattr(handle, 'seek'):
+        try:
+            handle.seek(0)
+        except Exception:
+            pass
     reader = csv.reader(handle, delimiter=delimiter)
     mapping = {}
     first_row = True

@@ -247,7 +247,8 @@ def add_options(parser):
             action=partial_action(transform.strip_range), help="""Strip ranges
             from sequences IDs, matching </x-y>""")
     id_mods.add_argument('--rename', metavar='MAP',
-            action=RenameAction, help="""Rename sequence IDs based on a
+            action=RenameAction, type=common.FileType('rt'),
+            help="""Rename sequence IDs based on a
             two-column map file (old ID, new ID).""")
     id_mods.add_argument('--rename-delimiter', dest='rename_delimiter',
             default='\\t', action=RenameDelimiterAction,
