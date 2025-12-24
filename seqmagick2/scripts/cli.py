@@ -145,8 +145,12 @@ def parse_arguments(argv):
     # Add actions
     actions = {}
     for name, mod in subcommands.itermodules():
-        subparser = subparsers.add_parser(name, help=mod.__doc__,
-                description=mod.__doc__)
+        subparser = subparsers.add_parser(
+            name,
+            help=mod.__doc__,
+            description=mod.__doc__,
+            formatter_class=partial(_ColoredHelpFormatter,
+                                    use_color=use_color_help))
         mod.build_parser(subparser)
         actions[name] = mod.action
 
