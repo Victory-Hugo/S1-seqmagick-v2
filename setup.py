@@ -6,6 +6,10 @@ import subprocess
 from pathlib import Path
 from setuptools import setup, find_packages
 
+# Find build configuration files
+build_config_dir = Path(__file__).parent / 'build-config'
+sys.path.insert(0, str(build_config_dir))
+
 subprocess.call(
     ('mkdir -p seqmagick2/data && '
      'git describe --tags --dirty > seqmagick2/data/ver.tmp '

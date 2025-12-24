@@ -88,4 +88,16 @@ python -m seqmagick2 --help
 
 想了解更多？前往[文档](http://seqmagick.readthedocs.org/en/latest/)。
 
+## 项目结构
+
+本项目已重新整理目录结构，详细说明请参考 [STRUCTURE.md](STRUCTURE.md)：
+
+- `/seqmagick2/` - 核心代码包
+- `/docs/` - 项目文档  
+- `/examples/` - 使用示例
+- `/build-config/` - 构建配置文件
+- `/project-docs/` - 项目管理文档
+- `/ci-cd/` - CI/CD 配置
+- `/scripts/` - 入口脚本
+
 `seqmagick2` 是 GPL v3 下的自由软件。
