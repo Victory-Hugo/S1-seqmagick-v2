@@ -15,7 +15,6 @@ from . import common
 
 
 def build_parser(parser):
-    parser.formatter_class = argparse.RawDescriptionHelpFormatter
     parser.epilog = (
         "Common examples / 常用示例:\n"
         "  seqmagick2 backtrans-align protein.aln nuc.fasta -output fasta\n"
