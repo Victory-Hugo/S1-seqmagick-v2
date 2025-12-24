@@ -4,12 +4,14 @@ Info action / 信息统计
 
 import collections
 import csv
+import itertools
 import multiprocessing
 import sys
 
 from functools import partial
 
 from Bio import SeqIO
+from Bio.SeqUtils import ProtParam
 
 from seqmagick2 import fileformat
 
@@ -33,7 +35,8 @@ def build_parser(parser):
             type=int,
             help="""Number of threads (CPUs). [%(default)s] / 线程数""")
     parser.add_argument('-more', '--more', dest='more', action='store_true',
-            help="Output per-sequence details (length, GC%%, N count, gaps). / 输出每条序列详情")
+            help="Output per-sequence details (length, GC%%, N count, gaps, "
+                 "base counts, and protein properties when detected). / 输出每条序列详情")
 
 class SeqInfoWriter(object):
     """
@@ -98,28 +101,50 @@ _HEADERS = ('name', 'alignment', 'min_len', 'max_len', 'avg_len',
               'num_seqs')
 _SeqFileInfo = collections.namedtuple('SeqFileInfo', _HEADERS)
 
-_DETAIL_HEADERS = ('file', 'id', 'length', 'gc_pct', 'n_count', 'gap_count')
+_DETAIL_HEADERS = ('file', 'id', 'length', 'gc_pct', 'n_count', 'gap_count',
+                   'seq_type', 'a_count', 'c_count', 'g_count', 't_count',
+                   'u_count', 'aa_pi', 'aa_gravy')
+_DETAIL_HEADERS_NUC = ('file', 'id', 'length', 'gc_pct', 'n_count', 'gap_count',
+                       'seq_type', 'a_count', 'c_count', 'g_count', 't_count',
+                       'u_count')
 _SeqRecordInfo = collections.namedtuple('SeqRecordInfo', _DETAIL_HEADERS)
+_SeqRecordInfoNuc = collections.namedtuple('SeqRecordInfoNuc',
+                                           _DETAIL_HEADERS_NUC)
 
 
 class DetailSeqInfoWriter(SeqInfoWriter):
+    def __init__(self, sequence_files, rows, output, headers=None):
+        super(DetailSeqInfoWriter, self).__init__(sequence_files, rows, output)
+        self.headers = headers or _DETAIL_HEADERS
+
     def write(self):
-        self.write_header(_DETAIL_HEADERS)
+        self.write_header(self.headers)
         for row in self.rows:
-            self.write_row(_SeqRecordInfo(*row))
+            self.write_row(row)
 
 
 class CsvDetailSeqInfoWriter(DetailSeqInfoWriter):
     delimiter = ','
-    def __init__(self, sequence_files, rows, output):
+    def __init__(self, sequence_files, rows, output, headers=None):
         super(CsvDetailSeqInfoWriter, self).__init__(
-            sequence_files, rows, output)
+            sequence_files, rows, output, headers=headers)
         self.writer = csv.writer(self.output, delimiter=self.delimiter,
                 lineterminator='\n')
 
     def write_row(self, row):
         if hasattr(row, '_replace'):
-            row = row._replace(gc_pct='{0:.2f}'.format(row.gc_pct))
+            updates = {}
+            if 'gc_pct' in row._fields:
+                updates['gc_pct'] = _format_optional_float(row.gc_pct)
+            if 'aa_pi' in row._fields:
+                updates['aa_pi'] = _format_optional_float(row.aa_pi)
+            if 'aa_gravy' in row._fields:
+                updates['aa_gravy'] = _format_optional_float(row.aa_gravy)
+            for field in ('a_count', 'c_count', 'g_count', 't_count', 'u_count'):
+                if field in row._fields:
+                    updates[field] = _format_optional_int(getattr(row, field))
+            if updates:
+                row = row._replace(**updates)
         self.writer.writerow(row)
 
 
@@ -128,27 +153,96 @@ class TsvDetailSeqInfoWriter(CsvDetailSeqInfoWriter):
 
 
 class AlignedDetailSeqInfoWriter(DetailSeqInfoWriter):
-    def __init__(self, sequence_files, rows, output):
+    def __init__(self, sequence_files, rows, output, headers=None):
         super(AlignedDetailSeqInfoWriter, self).__init__(
-            sequence_files, rows, output)
+            sequence_files, rows, output, headers=headers)
         self.file_width = max(len('file'), max(len(f) for f in sequence_files))
         self.id_width = max(len('id'), 20)
+        self.include_protein = 'aa_pi' in self.headers
 
     def write_header(self, header):
-        fmt = ('{0:' + str(self.file_width) + 's} '
-               '{1:' + str(self.id_width) + 's} '
-               '{2:>10s}{3:>10s}{4:>10s}{5:>10s}')
+        if self.include_protein:
+            fmt = ('{0:' + str(self.file_width) + 's} '
+                   '{1:' + str(self.id_width) + 's} '
+                   '{2:>10s}{3:>10s}{4:>10s}{5:>10s}{6:>10s}'
+                   '{7:>10s}{8:>10s}{9:>10s}{10:>10s}{11:>10s}'
+                   '{12:>10s}{13:>10s}')
+        else:
+            fmt = ('{0:' + str(self.file_width) + 's} '
+                   '{1:' + str(self.id_width) + 's} '
+                   '{2:>10s}{3:>10s}{4:>10s}{5:>10s}{6:>10s}'
+                   '{7:>10s}{8:>10s}{9:>10s}{10:>10s}{11:>10s}')
         print(fmt.format(*header), file=self.output)
 
     def write_row(self, row):
-        fmt = ('{file:' + str(self.file_width) + 's} '
-               '{id:' + str(self.id_width) + 's} '
-               '{length:10d}{gc_pct:10.2f}{n_count:10d}{gap_count:10d}')
-        print(fmt.format(**row._asdict()), file=self.output)
+        data = row._asdict()
+        data['gc_pct'] = _format_optional_float(row.gc_pct)
+        data['a_count'] = _format_optional_int(row.a_count)
+        data['c_count'] = _format_optional_int(row.c_count)
+        data['g_count'] = _format_optional_int(row.g_count)
+        data['t_count'] = _format_optional_int(row.t_count)
+        data['u_count'] = _format_optional_int(row.u_count)
+        if self.include_protein:
+            data['aa_pi'] = _format_optional_float(row.aa_pi)
+            data['aa_gravy'] = _format_optional_float(row.aa_gravy)
+            fmt = ('{file:' + str(self.file_width) + 's} '
+                   '{id:' + str(self.id_width) + 's} '
+                   '{length:10d}{gc_pct:>10s}{n_count:10d}{gap_count:10d}'
+                   '{seq_type:>10s}{a_count:>10s}{c_count:>10s}{g_count:>10s}'
+                   '{t_count:>10s}{u_count:>10s}{aa_pi:>10s}{aa_gravy:>10s}')
+        else:
+            fmt = ('{file:' + str(self.file_width) + 's} '
+                   '{id:' + str(self.id_width) + 's} '
+                   '{length:10d}{gc_pct:>10s}{n_count:10d}{gap_count:10d}'
+                   '{seq_type:>10s}{a_count:>10s}{c_count:>10s}{g_count:>10s}'
+                   '{t_count:>10s}{u_count:>10s}')
+        print(fmt.format(**data), file=self.output)
 
 
 _DETAIL_WRITERS = {'csv': CsvDetailSeqInfoWriter, 'tab': TsvDetailSeqInfoWriter,
         'align': AlignedDetailSeqInfoWriter}
+
+_DNA_CHARS = set('ACGTRYSWKMBDHVN')
+_RNA_CHARS = set('ACGURYSWKMBDHVN')
+_PROTEIN_CHARS = set('ACDEFGHIKLMNPQRSTVWYBJZXUO*')
+_PROTEIN_CANONICAL = set('ACDEFGHIKLMNPQRSTVWY')
+
+def _format_optional_float(value):
+    if value is None:
+        return ''
+    return '{0:.2f}'.format(value)
+
+def _format_optional_int(value):
+    if value is None:
+        return ''
+    return str(value)
+
+def _strip_protein_fields(row):
+    return row[:-2]
+
+def _detect_seq_type(seq):
+    letters = set(seq)
+    letters.discard('-')
+    letters.discard('.')
+    if not letters:
+        return 'UNKNOWN'
+
+    if letters <= _DNA_CHARS:
+        return 'DNA'
+    if letters <= _RNA_CHARS:
+        if 'U' in letters and 'T' not in letters:
+            return 'RNA'
+        if 'T' in letters and 'U' not in letters:
+            return 'DNA'
+        return 'UNKNOWN'
+
+    if letters <= _PROTEIN_CHARS:
+        return 'PROTEIN'
+
+    if letters - _DNA_CHARS and letters <= _PROTEIN_CHARS:
+        return 'PROTEIN'
+
+    return 'UNKNOWN'
 
 def summarize_sequence_file(source_file, file_type=None):
     """
@@ -207,12 +301,35 @@ def iter_sequence_details(source_file, file_type=None):
             length = len(record)
             gap_count = seq.count('-') + seq.count('.')
             n_count = seq.count('N')
-            non_gap = length - gap_count
-            if non_gap:
-                gc_pct = ((seq.count('G') + seq.count('C')) / float(non_gap)) * 100.0
+            seq_type = _detect_seq_type(seq)
+
+            if seq_type in ('DNA', 'RNA'):
+                a_count = seq.count('A')
+                c_count = seq.count('C')
+                g_count = seq.count('G')
+                t_count = seq.count('T')
+                u_count = seq.count('U')
             else:
-                gc_pct = 0.0
-            yield (source_file, record.id, length, gc_pct, n_count, gap_count)
+                a_count = c_count = g_count = t_count = u_count = None
+
+            non_gap = length - gap_count
+            if non_gap and seq_type in ('DNA', 'RNA'):
+                gc_pct = ((g_count + c_count) / float(non_gap)) * 100.0
+            else:
+                gc_pct = None
+
+            aa_pi = None
+            aa_gravy = None
+            if seq_type == 'PROTEIN':
+                aa_seq = ''.join([aa for aa in seq if aa in _PROTEIN_CANONICAL])
+                if aa_seq:
+                    analysis = ProtParam.ProteinAnalysis(aa_seq)
+                    aa_pi = analysis.isoelectric_point()
+                    aa_gravy = analysis.gravy()
+
+            yield (source_file, record.id, length, gc_pct, n_count, gap_count,
+                   seq_type, a_count, c_count, g_count, t_count, u_count,
+                   aa_pi, aa_gravy)
 
 def action(arguments):
     """
@@ -238,6 +355,21 @@ def action(arguments):
         rows = (row for f in arguments.source_files
                 for row in iter_sequence_details(
                     f, file_type=arguments.input_format))
+        headers = _DETAIL_HEADERS_NUC
+        try:
+            first_row = next(rows)
+        except StopIteration:
+            rows = iter(())
+        else:
+            include_protein = first_row[6] == 'PROTEIN'
+            if include_protein:
+                headers = _DETAIL_HEADERS
+                rows = itertools.chain([_SeqRecordInfo(*first_row)],
+                                       (_SeqRecordInfo(*row) for row in rows))
+            else:
+                rows = itertools.chain([_SeqRecordInfoNuc(*_strip_protein_fields(first_row))],
+                                       (_SeqRecordInfoNuc(*_strip_protein_fields(row))
+                                        for row in rows))
     else:
         writer_cls = _WRITERS[output_format]
         ssf = partial(summarize_sequence_file, file_type=arguments.input_format)
@@ -251,5 +383,9 @@ def action(arguments):
             rows = (ssf(f) for f in arguments.source_files)
 
     with handle:
-        writer = writer_cls(arguments.source_files, rows, handle)
+        if arguments.more:
+            writer = writer_cls(arguments.source_files, rows, handle,
+                                headers=headers)
+        else:
+            writer = writer_cls(arguments.source_files, rows, handle)
         writer.write()

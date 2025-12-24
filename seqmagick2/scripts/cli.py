@@ -83,3 +83,7 @@ def parse_arguments(argv):
         return parse_arguments([str(arguments.action), '-h'])
 
     return actions[action], arguments
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
