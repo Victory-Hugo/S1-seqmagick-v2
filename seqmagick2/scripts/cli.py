@@ -119,6 +119,7 @@ def parse_arguments(argv):
             "  seqmagick2 convert --cut=1:300 --line-wrap 0 input.fasta output.fasta # 保留第 1号位置 到 300 的序列，不分行\n"
             "  seqmagick2 convert --deduplicate-sequences input.fasta output.fasta # 删除重复序列\n"
             "  seqmagick2 convert --include-from-file List_ID.txt input.fasta output.fasta # 仅保留 List_ID.txt 中的序列\n"
+            "  seqmagick2 convert --first-name-delimiter \"_\" input.fasta output.fasta # 仅保留序列 ID 中第一个下划线前的部分\n"
             "  seqmagick2 split input.fasta output_dir/ # 将序列拆分为多个文件，保存在 output_dir/\n"
             
         ),

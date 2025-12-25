@@ -187,6 +187,20 @@ def first_name_capture(records):
             yield record
 
 
+def first_name_delimiter(records, delimiter):
+    """
+    Take only the part before the first occurrence of the specified delimiter as the name of the sequence.
+    Performs exact string matching, not regex.
+    """
+    logging.info('Applying _first_name_delimiter generator: '
+                 f'keeping only the part before the first "{delimiter}" delimiter.')
+    for record in records:
+        if delimiter in record.id:
+            new_id = record.id.split(delimiter, 1)[0]
+            _update_id(record, new_id)
+        yield record
+
+
 def include_from_file(records, handle):
     """
     Filter the records, keeping only sequences whose ID is contained in the

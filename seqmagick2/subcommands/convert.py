@@ -240,6 +240,12 @@ def add_options(parser):
             action=partial_action(transform.first_name_capture),
             dest='transforms', help='''Take only the first whitespace-delimited
             word as the name of the sequence / 仅保留首个空白前的名称''')
+    id_mods.add_argument('--first-name-delimiter', metavar='DELIMITER',
+            action=partial_action(transform.first_name_delimiter, 'delimiter'),
+            dest='transforms', help='''Take only the part before the first 
+            occurrence of the specified delimiter as the name of the sequence. 
+            Performs exact string matching, not regex. 
+            / 仅保留首个指定分隔符前面的名称(严格匹配，不支持正则表达式)''')
     id_mods.add_argument('--name-suffix', metavar='SUFFIX',
             action=partial_action(transform.name_append_suffix, 'suffix'),
             dest='transforms', help='Append a suffix to all IDs. / 为所有 ID 追加后缀')
