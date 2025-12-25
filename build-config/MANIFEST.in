@@ -1,4 +1,5 @@
 include seqmagick2/test/integration/data/*
+include seqmagick2/bin/*
 
 global-exclude *.so
 global-exclude *.pyd

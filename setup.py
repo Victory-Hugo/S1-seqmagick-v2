@@ -68,7 +68,7 @@ setup(name='seqmagick2',
               'seqmagick2 = seqmagick2.scripts.cli:main'
           ]},
       package_data={
-          'seqmagick2': ['data/*'],
+          'seqmagick2': ['data/*', 'bin/*'],
           'seqmagick2.test.integration': ['data/*']
       },
       python_requires='>=3.9',

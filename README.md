@@ -10,6 +10,7 @@ Version: 1.0.0
 seqmagick2 convert a.fasta b.phy    # 将 fasta 格式转换为 phylip 格式
 seqmagick2 mogrify --ungap a.fasta  # 从 a.fasta 中删除所有间隙，原地修改
 seqmagick2 info *.{fasta,sto}       # 描述当前目录中所有 FASTA 和 Stockholm 文件的信息
+seqmagick2 msa-view aligned.fasta   # 使用 termal 在终端查看多序列对齐文件
 ```
 
 ## 需求
