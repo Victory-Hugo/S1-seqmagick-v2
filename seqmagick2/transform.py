@@ -288,6 +288,26 @@ def rename_sequences(records, mapping_handle, delimiter='\t'):
         yield record
 
 
+def name_standard(records, mapping_handle, prefix='ID-'):
+    """
+    Rename sequence IDs to a standardized ID-# series and write a mapping file.
+    """
+    writer = csv.writer(mapping_handle, delimiter='\t', lineterminator='\n')
+    for index, record in enumerate(records, start=1):
+        old_id = record.id
+        old_description = record.description or ''
+        if old_description == old_id:
+            old_description = ''
+        elif old_description.startswith(old_id + ' '):
+            old_description = old_description[len(old_id) + 1:]
+        new_id = "{}{}".format(prefix, index)
+        writer.writerow([old_id, new_id, old_description])
+        record.id = new_id
+        record.name = new_id
+        record.description = new_id
+        yield record
+
+
 def isolate_region(sequences, start, end, gap_char='-'):
     """
     Replace regions before and after start:end with gap chars

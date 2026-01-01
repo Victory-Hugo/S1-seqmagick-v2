@@ -2,6 +2,7 @@
 Convert between sequence formats / 序列格式转换
 """
 import argparse
+import contextlib
 import copy
 import functools
 import logging
@@ -270,6 +271,9 @@ def add_options(parser):
     id_mods.add_argument('--rename-delimiter', dest='rename_delimiter',
             default='\\t', action=RenameDelimiterAction,
             help="Delimiter for --rename map file: ',' or '\\t' (default: \\t). / 映射表分隔符")
+    id_mods.add_argument('--name-standard', dest='name_standard',
+            action='store_true',
+            help='Rename all IDs to ID-1, ID-2, ... and write a map file. / 统一重命名并输出映射表')
 
     format_group = parser.add_argument_group('Format Options / 格式选项')
     format_group.add_argument('--input-format', metavar='FORMAT',
@@ -291,6 +295,8 @@ def build_parser(parser):
     parser.add_argument('source_file', type=common.FileType('rt'),
                         help="Input sequence file / 输入序列文件")
     parser.add_argument('dest_file', help="Output file / 输出文件")
+    parser.add_argument('map_file', nargs='?',
+                        help="Output map file for --name-standard / 映射表输出文件")
 
     return parser
 
@@ -366,32 +372,47 @@ def transform_file(source_file, destination_file, arguments):
         for apply_function in arguments.apply_function:
             records = apply_function(records)
 
-    # Optional profiling for large streams.
-    records = common.maybe_profile_iterable('convert.write', records)
+    map_path = getattr(arguments, 'map_file', None)
+    if arguments.name_standard:
+        if not map_path:
+            raise ValueError("--name-standard requires a map file path")
+    elif map_path:
+        raise ValueError("map file path requires --name-standard")
+    map_context = contextlib.nullcontext()
+    if arguments.name_standard:
+        map_context = common.atomic_write(
+            map_path, file_factory=common.FileType('wt'))
 
-    # Only the fasta format is supported, as SeqIO.write does not have a 'wrap'
-    # parameter.
-    if (arguments.line_wrap is not None and destination_file_type == 'fasta'):
-        logging.info("Attempting to write fasta with %d line breaks.",
-                arguments.line_wrap)
+    with map_context as map_handle:
+        if arguments.name_standard:
+            records = transform.name_standard(records, map_handle)
 
-        with destination_file:
-            writer = FastaIO.FastaWriter(
-                destination_file, wrap=arguments.line_wrap)
-            writer.write_file(records)
-    else:
-        # Mogrify requires writing all changes to a temporary file by default,
-        # but convert uses a destination file instead if one was specified. Get
-        # sequences from an iterator that has generator functions wrapping it.
-        # After creation, it is then copied back over the original file if all
-        # tasks finish up without an exception being thrown.  This avoids
-        # loading the entire sequence file up into memory.
-        logging.info("Applying transformations, writing to %s",
-                destination_file)
-        # Append datatype annotation, mandatory for Nexus files conversion.
-        if arguments.alphabet != None:
-            records = append_annotation_iterator(records, arguments.alphabet)
-        SeqIO.write(records, destination_file, destination_file_type)
+        # Optional profiling for large streams.
+        records = common.maybe_profile_iterable('convert.write', records)
+
+        # Only the fasta format is supported, as SeqIO.write does not have a 'wrap'
+        # parameter.
+        if (arguments.line_wrap is not None and destination_file_type == 'fasta'):
+            logging.info("Attempting to write fasta with %d line breaks.",
+                    arguments.line_wrap)
+
+            with destination_file:
+                writer = FastaIO.FastaWriter(
+                    destination_file, wrap=arguments.line_wrap)
+                writer.write_file(records)
+        else:
+            # Mogrify requires writing all changes to a temporary file by default,
+            # but convert uses a destination file instead if one was specified. Get
+            # sequences from an iterator that has generator functions wrapping it.
+            # After creation, it is then copied back over the original file if all
+            # tasks finish up without an exception being thrown.  This avoids
+            # loading the entire sequence file up into memory.
+            logging.info("Applying transformations, writing to %s",
+                    destination_file)
+            # Append datatype annotation, mandatory for Nexus files conversion.
+            if arguments.alphabet != None:
+                records = append_annotation_iterator(records, arguments.alphabet)
+            SeqIO.write(records, destination_file, destination_file_type)
 
 
 def module_function(string):
